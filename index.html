@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Automatic Tab Cloak -->
     <title>Clever | Portal</title>
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png">
+    <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -584,37 +584,58 @@
         }
 
        function launchGame(g) {
+    // Stats init
     if (!state.stats[g.id]) state.stats[g.id] = { time: 0, launches: 0 };
     state.stats[g.id].launches++;
     state.activeGameId = g.id;
     state.startTime = Date.now();
+
+    // Achievements
+    const hour = new Date().getHours();
+    if (hour >= 23 || hour <= 4) unlockBadge('Night Owl');
+
+    const playedCount = Object.values(state.stats).filter(s => s.launches > 0).length;
+    if (playedCount >= 20) unlockBadge('Explorer');
+
     save();
 
     const targetUrl = g.url;
 
-    // Open blank tab
+    // Open blank tab (must be triggered by a user click or popup blockers will stop it)
     const newTab = window.open("about:blank", "_blank");
-
     if (!newTab) {
         alert("Popup blocked! Allow popups for this site.");
         return;
     }
 
-    // Write cloaked page into it
+    // Cloaked about:blank page
+    const cloakTitle = "IXL";
+    const cloakIcon = "https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png"; // your icon
+
+    // Basic escaping so quotes in URLs don't break the HTML string
+    const safeUrl = String(targetUrl).replace(/"/g, "&quot;");
+
+    newTab.document.open();
     newTab.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>IXL</title>
-            <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/7/7d/IXL_Learning.png">
-            <style>
-                html, body {
-                    margin: 0;
-                    padding: 0;
-                    height: 100%;
-                    background: #ffffff;
-                    overflow: hidden;
-                }
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${cloakTitle}</title>
+  <link rel="icon" href="${cloakIcon}">
+  <meta name="referrer" content="no-referrer">
+  <style>
+    html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#fff; }
+    iframe { width:100%; height:100%; border:0; }
+  </style>
+</head>
+<body>
+  <iframe src="${safeUrl}" allowfullscreen></iframe>
+</body>
+</html>
+    `);
+    newTab.document.close();
+}
                 iframe {
                     border: none;
                     width: 100%;
