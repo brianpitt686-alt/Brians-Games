@@ -3,126 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brian's Nexus | Elite Portal</title>
-    
+    <title>Brian's Nexus | Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
-                }
-            }
-        }
-    </script>
-    
     <style>
         :root { --cursor-color: #3b82f6; }
-        body { cursor: none; transition: background-color 0.5s ease; scroll-behavior: smooth; }
+        body { cursor: none; transition: background-color 0.5s ease; scroll-behavior: smooth; overflow-x: hidden; }
         .dark body { background-color: #020617; color: #f8fafc; }
         .light body { background-color: #f1f5f9; color: #0f172a; }
-
-        #loader {
-            position: fixed; inset: 0; z-index: 9999;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #020617; transition: opacity 0.8s ease;
-        }
-
-        #custom-cursor {
-            width: 20px; height: 20px; border: 2px solid var(--cursor-color); border-radius: 50%;
-            position: fixed; pointer-events: none; z-index: 10000;
-            transition: transform 0.15s ease-out, background 0.3s ease;
-            transform: translate(-50%, -50%);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
-        }
-
-        #stats-dashboard {
-            transform: translateX(100%);
-            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-        }
+        #loader { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #020617; transition: opacity 0.8s ease; }
+        #custom-cursor { width: 20px; height: 20px; border: 2px solid var(--cursor-color); border-radius: 50%; position: fixed; pointer-events: none; z-index: 10000; transition: transform 0.1s ease-out; transform: translate(-50%, -50%); }
+        #stats-dashboard { position: fixed; top: 0; right: 0; h-full; width: 400px; z-index: 60; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
         #stats-dashboard.active { transform: translateX(0); }
-
         .glass { backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .dark .glass { background: rgba(15, 23, 42, 0.7); }
-        .light .glass { background: rgba(255, 255, 255, 0.8); border-color: rgba(0, 0, 0, 0.05); }
-
-        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
-        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .dark .glass { background: rgba(15, 23, 42, 0.8); }
+        .light .glass { background: rgba(255, 255, 255, 0.85); border-color: rgba(0,0,0,0.05); }
     </style>
 </head>
-<body class="selection:bg-blue-500/30 overflow-x-hidden">
+<body class="selection:bg-blue-500/30">
 
     <div id="loader">
-        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h1 class="text-white font-black tracking-widest text-xl animate-pulse uppercase">Syncing Games...</h1>
+        <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h1 class="text-white font-black tracking-widest text-lg animate-pulse uppercase">Nexus Booting...</h1>
     </div>
 
-    <canvas id="particleCanvas" class="fixed inset-0 -z-10"></canvas>
     <div id="custom-cursor"></div>
 
-    <nav class="fixed top-0 w-full z-50 glass border-b">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">🎮</div>
-                <h1 class="text-xl font-extrabold tracking-tighter uppercase">Nexus<span class="text-blue-500">Apex</span></h1>
-            </div>
-
-            <div class="flex items-center gap-6">
-                <button onclick="toggleDashboard()" class="flex flex-col items-end group">
-                    <div class="flex items-center gap-2">
-                        <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest">NOOB</span>
-                        <span class="text-xs font-bold">Lv. <span id="user-level">1</span></span>
-                    </div>
-                    <div class="w-32 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
-                        <div id="xp-progress" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                </button>
-                <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-xl">🌙</button>
-            </div>
+    <nav class="fixed top-0 w-full z-50 glass border-b h-20 flex items-center justify-between px-8">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white font-bold">B</div>
+            <h1 class="text-xl font-extrabold tracking-tighter uppercase">Nexus<span class="text-blue-500">Apex</span></h1>
+        </div>
+        <div class="flex items-center gap-6">
+            <button onclick="toggleDashboard()" class="flex flex-col items-end group">
+                <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest">NOOB</span>
+                <div class="w-24 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
+                    <div id="xp-progress" class="h-full bg-blue-500 transition-all duration-500" style="width: 20%"></div>
+                </div>
+            </button>
+            <button onclick="toggleTheme()" id="theme-btn" class="text-xl">🌙</button>
         </div>
     </nav>
 
-    <div id="stats-dashboard" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[60] glass border-l p-10 flex flex-col">
-        <div class="flex justify-between items-center mb-10">
-            <h2 class="text-3xl font-black tracking-tighter uppercase">Profile <span class="text-blue-500">Stats</span></h2>
-            <button onclick="toggleDashboard()" class="text-sm font-bold opacity-50 hover:opacity-100 uppercase">Close</button>
+    <div id="stats-dashboard" class="h-full glass border-l p-8 shadow-2xl overflow-y-auto">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-black uppercase">User <span class="text-blue-500">Stats</span></h2>
+            <button onclick="toggleDashboard()" class="text-xs font-bold opacity-50 hover:opacity-100">CLOSE</button>
         </div>
-        <div id="game-stats-list" class="space-y-4 overflow-y-auto no-scrollbar pb-10">
-            <div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20 mb-4">
-                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Playtime</p>
-                <p id="total-time-global" class="text-4xl font-black">0m</p>
+        <div id="dashboard-content" class="space-y-4">
+             <div class="p-6 rounded-2xl bg-blue-600/10 border border-blue-500/20">
+                <p class="text-[10px] font-bold text-blue-500 uppercase">Total Playtime</p>
+                <p id="total-time-global" class="text-3xl font-black">0m</p>
             </div>
-            </div>
+            <div id="game-stats-list" class="space-y-3"></div>
+        </div>
     </div>
 
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-6">
         <section id="page-home">
-            <div class="mb-12">
-                <h2 class="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6 uppercase">Brian's<br><span class="text-blue-500">Games</span></h2>
-                <div class="flex flex-wrap gap-4">
-                    <input type="text" id="search-bar" placeholder="Find your game..." class="px-6 py-4 rounded-2xl glass w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                </div>
-            </div>
+            <h2 class="text-6xl font-black tracking-tighter mb-10 uppercase">My <span class="text-blue-500">Library</span></h2>
             <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
         </section>
 
         <section id="page-detail" class="hidden">
             <div class="flex flex-col lg:flex-row gap-12 items-center">
-                <div class="w-full lg:w-1/2 aspect-video rounded-[2rem] overflow-hidden border shadow-2xl">
-                    <img id="detail-img" src="" class="w-full h-full object-cover">
-                </div>
+                <img id="detail-img" class="w-full lg:w-1/2 aspect-video rounded-[2rem] object-cover border shadow-2xl">
                 <div class="w-full lg:w-1/2">
-                    <h2 id="detail-title" class="text-6xl font-black mt-4 mb-2 tracking-tighter"></h2>
-                    <div class="flex gap-4 mb-6 text-sm font-bold opacity-60">
-                        <p>Playtime: <span id="detail-time" class="text-blue-500">0m</span></p>
-                        <p>Launches: <span id="detail-launches" class="text-blue-500">0</span></p>
-                    </div>
-                    <p id="detail-desc" class="text-xl opacity-70 mb-10 leading-relaxed"></p>
+                    <h2 id="detail-title" class="text-6xl font-black mb-4 tracking-tighter"></h2>
+                    <p id="detail-stats" class="text-sm font-bold opacity-60 mb-8">Time: 0m | Plays: 0</p>
                     <div class="flex gap-4">
-                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all shadow-xl">LAUNCH</button>
+                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all shadow-xl">PLAY GAME</button>
                         <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold">BACK</button>
                     </div>
                 </div>
@@ -131,174 +81,40 @@
     </main>
 
     <script>
-        // The URL format must be exact. Space characters in folder names must be %20.
         const repoBase = "https://brianpitt686-alt.github.io/Brians-Games/Games/";
         
         const games = [
-    { 
-        id: '1', 
-        title: '1v1.space', 
-        url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/1v1space/index.html',
-        cover: 'https://assets.fortnitecreativehq.com/wp-content/uploads/2023/03/31145625/screen_comp-1907-1040x585.jpeg ' // Replace with your image link
-    },
-    { 
-        id: '2', 
-        title: '2048', 
-        url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/2048/index.html',
-        cover: 'https://play-lh.googleusercontent.com/bZregCeEpzMwRoocLnsYb4Te-vPPHkW1k5H1xsQ3qK9yE00fixpWu5fNsUz3ut2IiDHn' 
-    },
-    { 
-        id: '3', 
-        title: 'A Dance of Fire and Ice', 
-        folder: 'A%20Dance%20of%20Fire%20and%20Ice',
-        cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500'
-    },
-    { 
-        id: '4', 
-        title: 'Backrooms', 
-        folder: 'Backrooms',
-        cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500'
-    },
-    { 
-        id: '5', 
-        title: 'Basket Stars', 
-        folder: 'Basket%20Stars',
-        cover: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500'
-    },
-    { 
-        id: '6', 
-        title: 'Bitlife', 
-        folder: 'Bitlife',
-        cover: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500'
-    },
-    { 
-        id: '7', 
-        title: 'Cookie Clicker', 
-        folder: 'Cookie%20Clicker',
-        cover: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500'
-    },
-    { 
-        id: '8', 
-        title: 'Crossy Road', 
-        folder: 'Crossy%20Road',
-        cover: 'https://images.unsplash.com/photo-1553481187-be93c21490a9?w=500'
-    },
-    { 
-        id: '9', 
-        title: 'Doodle Jump', 
-        folder: 'Doodle%20Jump',
-        cover: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=500'
-    },
-    { 
-        id: '10', 
-        title: 'Drive Mad', 
-        folder: 'Drive%20Mad',
-        cover: 'https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=500'
-    },
-    { 
-        id: '11', 
-        title: 'Eaglercraft', 
-        folder: 'Eaglercraft',
-        cover: 'https://images.unsplash.com/photo-1587573089734-09cb69c0f2b4?w=500'
-    },
-    { 
-        id: '12', 
-        title: 'Friday Night Funkin', 
-        folder: 'Friday%20Night%20Funkin',
-        cover: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500'
-    },
-    { 
-        id: '13', 
-        title: 'Geometry Dash', 
-        folder: 'Geometry%20Dash',
-        cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500'
-    },
-    { 
-        id: '14', 
-        title: 'Happy Wheels', 
-        folder: 'Happy%20Wheels',
-        cover: 'https://images.unsplash.com/photo-1599249300675-c39f1dd2d6be?w=500'
-    },
-    { 
-        id: '15', 
-        title: 'Mario', 
-        folder: 'Mario',
-        cover: 'https://images.unsplash.com/photo-1612684505953-24749bf3ec27?w=500'
-    },
-    { 
-        id: '16', 
-        title: 'Slope', 
-        folder: 'Slope',
-        cover: 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=500'
-    },
-    { 
-        id: '17', 
-        title: 'Stickman Hook', 
-        folder: 'Stickman%20Hook',
-        cover: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=500'
-    },
-    { 
-        id: '18', 
-        title: 'Subway Surfers', 
-        folder: 'Subway%20Surfers',
-        cover: 'https://images.unsplash.com/photo-1471180625745-944903837c21?w=500'
-    },
-    { 
-        id: '19', 
-        title: 'Tunnel Rush', 
-        folder: 'Tunnel%20Rush',
-        cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'
-    }
-];
+            { id: '1', title: '1v1.space', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/1v1space/index.html', cover: 'https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=500' },
+            { id: '2', title: '2048', folder: '2048', cover: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=500' },
+            { id: '3', title: 'A Dance of Fire and Ice', folder: 'A%20Dance%20of%20Fire%20and%20Ice', cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500' },
+            { id: '4', title: 'Backrooms', folder: 'Backrooms', cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500' },
+            { id: '5', title: 'Basket Stars', folder: 'Basket%20Stars', cover: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500' },
+            { id: '6', title: 'Bitlife', folder: 'Bitlife', cover: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500' },
+            { id: '7', title: 'Cookie Clicker', folder: 'Cookie%20Clicker', cover: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500' },
+            { id: '8', title: 'Crossy Road', folder: 'Crossy%20Road', cover: 'https://images.unsplash.com/photo-1553481187-be93c21490a9?w=500' },
+            { id: '9', title: 'Doodle Jump', folder: 'Doodle%20Jump', cover: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=500' },
+            { id: '10', title: 'Drive Mad', folder: 'Drive%20Mad', cover: 'https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=500' },
+            { id: '11', title: 'Eaglercraft', folder: 'Eaglercraft', cover: 'https://images.unsplash.com/photo-1587573089734-09cb69c0f2b4?w=500' },
+            { id: '12', title: 'Friday Night Funkin', folder: 'Friday%20Night%20Funkin', cover: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500' },
+            { id: '13', title: 'Geometry Dash', folder: 'Geometry%20Dash', cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500' },
+            { id: '14', title: 'Happy Wheels', folder: 'Happy%20Wheels', cover: 'https://images.unsplash.com/photo-1599249300675-c39f1dd2d6be?w=500' },
+            { id: '15', title: 'Mario', folder: 'Mario', cover: 'https://images.unsplash.com/photo-1612684505953-24749bf3ec27?w=500' },
+            { id: '16', title: 'Slope', folder: 'Slope', cover: 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=500' },
+            { id: '17', title: 'Stickman Hook', folder: 'Stickman%20Hook', cover: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=500' },
+            { id: '18', title: 'Subway Surfers', folder: 'Subway%20Surfers', cover: 'https://images.unsplash.com/photo-1471180625745-944903837c21?w=500' },
+            { id: '19', title: 'Tunnel Rush', folder: 'Tunnel%20Rush', cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500' }
+        ];
 
         let state = {
-            xp: parseInt(localStorage.getItem('nx_xp')) || 0,
-            lvl: parseInt(localStorage.getItem('nx_lvl')) || 1,
             theme: localStorage.getItem('nx_theme') || 'dark',
             stats: JSON.parse(localStorage.getItem('nx_stats')) || {},
             activeGameId: null,
             startTime: null
         };
 
-        function init() {
-            applyTheme();
-            renderSkeletons();
-            setTimeout(() => {
-                document.getElementById('loader').style.opacity = '0';
-                setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
-                renderGrid();
-            }, 1000);
-            updateUIStats();
-            initParticles();
-            setupCursor();
-            setInterval(updateTimeSpent, 10000);
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('game-grid');
-            const search = document.getElementById('search-bar').value.toLowerCase();
-            const filtered = games.filter(g => g.title.toLowerCase().includes(search));
-
-            grid.innerHTML = filtered.map(g => `
-                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-blue-500/50 transition-all duration-500">
-                    <img src="https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=500" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-40">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
-                    <div class="absolute bottom-6 left-6 text-white">
-                        <h3 class="text-2xl font-bold uppercase tracking-tighter">${g.title}</h3>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function openDetail(id) {
-            const g = games.find(i => i.id === id);
-            const gStats = state.stats[id] || { time: 0, launches: 0 };
-            document.getElementById('detail-title').innerText = g.title;
-            document.getElementById('detail-img').src = "https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=800";
-            document.getElementById('detail-time').innerText = formatTime(gStats.time);
-            document.getElementById('detail-launches').innerText = gStats.launches;
-            document.getElementById('play-btn').onclick = () => launchGame(g);
-            showPage('detail');
+        function save() {
+            localStorage.setItem('nx_stats', JSON.stringify(state.stats));
+            localStorage.setItem('nx_theme', state.theme);
         }
 
         function launchGame(g) {
@@ -306,86 +122,78 @@
             state.stats[g.id].launches++;
             state.activeGameId = g.id;
             state.startTime = Date.now();
+            save();
+
+            const targetUrl = g.url || (repoBase + g.folder + "/index.html");
             
-            saveState();
-            
-            // This is the direct link to your GitHub Pages hosted game
-            const gameUrl = repoBase + g.folder + "/index.html";
-            
-            const win = window.open('about:blank', '_blank');
-            win.document.title = "Google Docs";
-            const iframe = win.document.createElement('iframe');
-            iframe.src = gameUrl;
-            iframe.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;border:none;";
-            win.document.body.appendChild(iframe);
+            // SECURITY BYPASS: If standard about:blank is blocked, use a direct window
+            const win = window.open('', '_blank');
+            if (win) {
+                win.document.body.style.margin = "0";
+                win.document.body.style.height = "100vh";
+                win.document.title = "Google Docs";
+                const ifr = win.document.createElement('iframe');
+                ifr.src = targetUrl;
+                ifr.style.width = "100%";
+                ifr.style.height = "100%";
+                ifr.style.border = "none";
+                win.document.body.appendChild(ifr);
+            } else {
+                alert("POPUP BLOCKED! Please allow popups for this site to play.");
+            }
         }
 
         function updateTimeSpent() {
             if (state.activeGameId && state.startTime) {
-                const now = Date.now();
-                const secondsPassed = Math.floor((now - state.startTime) / 1000);
-                state.stats[state.activeGameId].time += secondsPassed;
-                state.startTime = now;
-                saveState();
+                const diff = Math.floor((Date.now() - state.startTime) / 1000);
+                state.stats[state.activeGameId].time += diff;
+                state.startTime = Date.now();
+                save();
             }
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = games.map(g => `
+                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-blue-500/50 transition-all duration-300">
+                    <img src="${g.cover}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    <div class="absolute bottom-6 left-6 text-white">
+                        <h3 class="text-xl font-bold uppercase tracking-tight">${g.title}</h3>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openDetail(id) {
+            const g = games.find(i => i.id === id);
+            const s = state.stats[id] || { time: 0, launches: 0 };
+            document.getElementById('detail-title').innerText = g.title;
+            document.getElementById('detail-img').src = g.cover;
+            document.getElementById('detail-stats').innerText = `Time: ${Math.floor(s.time/60)}m | Plays: ${s.launches}`;
+            document.getElementById('play-btn').onclick = () => launchGame(g);
+            showPage('detail');
         }
 
         function toggleDashboard() {
             const db = document.getElementById('stats-dashboard');
             db.classList.toggle('active');
-            if(db.classList.contains('active')) updateDashboard();
-        }
-
-        function updateDashboard() {
-            let totalSecs = 0;
-            const list = document.getElementById('game-stats-list');
-            list.innerHTML = `<div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20 mb-4">
-                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Playtime</p>
-                <p id="total-time-global" class="text-4xl font-black">0m</p>
-            </div>`;
-            
-            games.forEach(g => {
-                const s = state.stats[g.id] || { time: 0, launches: 0 };
-                totalSecs += s.time;
-                if(s.launches > 0) {
-                    list.innerHTML += `
-                        <div class="flex items-center justify-between p-4 rounded-2xl glass">
-                            <p class="font-bold text-sm uppercase">${g.title}</p>
-                            <div class="text-right text-xs">
-                                <p class="font-black text-blue-500">${formatTime(s.time)}</p>
-                            </div>
-                        </div>
-                    `;
-                }
-            });
-            document.getElementById('total-time-global').innerText = formatTime(totalSecs);
-        }
-
-        function formatTime(seconds) {
-            const m = Math.floor(seconds / 60);
-            return m + 'm';
-        }
-
-        function applyTheme() {
-            const html = document.documentElement;
-            state.theme === 'dark' ? html.classList.add('dark') : html.classList.remove('dark');
-            document.getElementById('theme-btn').innerText = state.theme === 'dark' ? '🌙' : '☀️';
-        }
-
-        function toggleTheme() {
-            state.theme = state.theme === 'dark' ? 'light' : 'dark';
-            applyTheme();
-            saveState();
-        }
-
-        function updateUIStats() {
-            document.getElementById('user-level').innerText = state.lvl;
-            document.getElementById('xp-progress').style.width = (state.xp % 100) + '%';
-        }
-
-        function saveState() {
-            localStorage.setItem('nx_stats', JSON.stringify(state.stats));
-            localStorage.setItem('nx_theme', state.theme);
+            if(db.classList.contains('active')) {
+                let total = 0;
+                const list = document.getElementById('game-stats-list');
+                list.innerHTML = '';
+                games.forEach(g => {
+                    const s = state.stats[g.id] || { time: 0, launches: 0 };
+                    total += s.time;
+                    if(s.launches > 0) {
+                        list.innerHTML += `<div class="p-4 glass rounded-xl flex justify-between text-xs font-bold uppercase">
+                            <span>${g.title}</span>
+                            <span class="text-blue-500">${Math.floor(s.time/60)}m</span>
+                        </div>`;
+                    }
+                });
+                document.getElementById('total-time-global').innerText = Math.floor(total/60) + 'm';
+            }
         }
 
         function showPage(p) {
@@ -393,40 +201,27 @@
             document.getElementById('page-detail').classList.toggle('hidden', p !== 'detail');
         }
 
-        function setupCursor() {
-            const cursor = document.getElementById('custom-cursor');
-            window.addEventListener('mousemove', (e) => {
-                cursor.style.left = e.clientX + 'px';
-                cursor.style.top = e.clientY + 'px';
-            });
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.className = state.theme;
+            save();
         }
 
-        function initParticles() {
-            const canvas = document.getElementById('particleCanvas');
-            const ctx = canvas.getContext('2d');
-            let pts = [];
-            const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-            window.onresize = resize; resize();
-            for(let i=0; i<30; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: 0.2, vy: 0.2 });
-            function draw() {
-                ctx.clearRect(0,0,canvas.width, canvas.height);
-                ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
-                pts.forEach(p => {
-                    p.x += p.vx; p.y += p.vy;
-                    if(p.x > canvas.width) p.x = 0; if(p.y > canvas.height) p.y = 0;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
-                });
-                requestAnimationFrame(draw);
-            }
-            draw();
-        }
+        // --- INIT ---
+        window.addEventListener('mousemove', (e) => {
+            const c = document.getElementById('custom-cursor');
+            c.style.left = e.clientX + 'px';
+            c.style.top = e.clientY + 'px';
+        });
 
-        function renderSkeletons() {
-            document.getElementById('game-grid').innerHTML = Array(8).fill(0).map(() => `<div class="h-64 rounded-[2rem] skeleton opacity-20"></div>`).join('');
-        }
+        setTimeout(() => {
+            document.getElementById('loader').style.opacity = '0';
+            setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
+            renderGrid();
+        }, 1000);
 
-        document.getElementById('search-bar').oninput = renderGrid;
-        init();
+        setInterval(updateTimeSpent, 5000);
+        document.documentElement.className = state.theme;
     </script>
 </body>
 </html>
