@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Apex | The Ultimate Portal</title>
+    <title>Nexus Apex | Elite Portal</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
@@ -21,30 +21,37 @@
     
     <style>
         :root { --cursor-color: #3b82f6; }
-        body { cursor: none; transition: background-color 0.5s ease; }
+        body { cursor: none; transition: background-color 0.5s ease; scroll-behavior: smooth; }
         .dark body { background-color: #020617; color: #f8fafc; }
         .light body { background-color: #f1f5f9; color: #0f172a; }
 
-        /* Loading Screen */
+        /* Loader */
         #loader {
             position: fixed; inset: 0; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #020617; transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #020617; transition: opacity 0.8s ease;
         }
 
         /* Custom Cursor */
         #custom-cursor {
             width: 20px; height: 20px; border: 2px solid var(--cursor-color); border-radius: 50%;
             position: fixed; pointer-events: none; z-index: 10000;
-            transition: transform 0.15s ease-out, background 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.15s ease-out, background 0.3s ease;
             transform: translate(-50%, -50%);
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
         }
 
+        /* Dashboard Slide */
+        #stats-dashboard {
+            transform: translateX(100%);
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        #stats-dashboard.active { transform: translateX(0); }
+
         /* Glassmorphism */
-        .glass { backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .dark .glass { background: rgba(15, 23, 42, 0.6); }
-        .light .glass { background: rgba(255, 255, 255, 0.7); border-color: rgba(0, 0, 0, 0.05); }
+        .glass { backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .dark .glass { background: rgba(15, 23, 42, 0.7); }
+        .light .glass { background: rgba(255, 255, 255, 0.8); border-color: rgba(0, 0, 0, 0.05); }
 
         /* Skeleton Pulse */
         .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
@@ -55,7 +62,7 @@
 
     <div id="loader">
         <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h1 class="text-white font-black tracking-widest text-xl animate-pulse">NEXUS APEX</h1>
+        <h1 class="text-white font-black tracking-widest text-xl animate-pulse uppercase">Nexus Elite</h1>
     </div>
 
     <canvas id="particleCanvas" class="fixed inset-0 -z-10"></canvas>
@@ -64,24 +71,44 @@
     <nav class="fixed top-0 w-full z-50 glass border-b">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">🎮</div>
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">🎮</div>
                 <h1 class="text-xl font-extrabold tracking-tighter uppercase">Nexus<span class="text-blue-500">Apex</span></h1>
             </div>
 
             <div class="flex items-center gap-6">
-                <div class="hidden md:flex flex-col items-end">
+                <button onclick="toggleDashboard()" class="flex flex-col items-end group">
                     <div class="flex items-center gap-2">
-                        <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest">NOOB</span>
+                        <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">NOOB</span>
                         <span class="text-xs font-bold">Lv. <span id="user-level">1</span></span>
                     </div>
                     <div class="w-32 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
                         <div id="xp-progress" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
                     </div>
-                </div>
+                </button>
                 <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-xl">🌙</button>
             </div>
         </div>
     </nav>
+
+    <div id="stats-dashboard" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[60] glass border-l p-10 flex flex-col">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-3xl font-black tracking-tighter">ELITE <span class="text-blue-500">STATS</span></h2>
+            <button onclick="toggleDashboard()" class="text-sm font-bold opacity-50 hover:opacity-100">CLOSE</button>
+        </div>
+
+        <div class="space-y-8 overflow-y-auto no-scrollbar pb-10">
+            <div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20">
+                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Time Spent</p>
+                <p id="total-time-global" class="text-4xl font-black">0h 0m</p>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Game History</h3>
+                <div id="game-stats-list" class="space-y-4">
+                    </div>
+            </div>
+        </div>
+    </div>
 
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-6">
         
@@ -92,7 +119,7 @@
                 </h2>
                 <div class="flex flex-wrap gap-4">
                     <input type="text" id="search-bar" placeholder="Search games..." class="px-6 py-4 rounded-2xl glass w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                    <select id="cat-filter" class="px-6 py-4 rounded-2xl glass outline-none cursor-none">
+                    <select id="cat-filter" class="px-6 py-4 rounded-2xl glass outline-none">
                         <option value="All">All Categories</option>
                         <option value="Arcade">Arcade</option>
                         <option value="Puzzle">Puzzle</option>
@@ -113,15 +140,15 @@
                     <span id="detail-cat" class="text-blue-500 font-bold text-xs tracking-widest uppercase"></span>
                     <h2 id="detail-title" class="text-6xl font-black mt-4 mb-2 tracking-tighter"></h2>
                     
-                    <div class="flex gap-4 mb-6 text-sm font-bold text-slate-500">
+                    <div class="flex gap-4 mb-6 text-sm font-bold opacity-60">
                         <p>Playtime: <span id="detail-time" class="text-blue-500">0m</span></p>
                         <p>Launches: <span id="detail-launches" class="text-blue-500">0</span></p>
                     </div>
 
                     <p id="detail-desc" class="text-xl opacity-70 mb-10 leading-relaxed"></p>
                     <div class="flex gap-4">
-                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all active:scale-95 cursor-none">PLAY NOW</button>
-                        <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold cursor-none">GO BACK</button>
+                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all active:scale-95 shadow-xl shadow-blue-600/30">PLAY NOW</button>
+                        <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold">BACK</button>
                     </div>
                 </div>
             </div>
@@ -129,10 +156,9 @@
     </main>
 
     <script>
-        // --- DATA & PERSISTENCE ---
         const games = [
             { id: '1', title: '2048', category: 'Puzzle', desc: 'Merge the tiles and get to 2048!', url: 'https://play2048.co/', thumb: 'https://images.unsplash.com/photo-1595303526913-c7037797ebe7?w=600' },
-            { id: '2', title: 'Flappy Bird', category: 'Arcade', desc: 'The ultimate test of frustration and skill.', url: 'https://flappybird.io/', thumb: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600' },
+            { id: '2', title: 'Retro Bird', category: 'Arcade', desc: 'The ultimate test of frustration and skill.', url: 'https://flappybird.io/', thumb: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600' },
             { id: '3', title: 'Hextris', category: 'Puzzle', desc: 'Fast-paced hexagonal block stacking.', url: 'https://hextris.io/', thumb: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=600' },
             { id: '4', title: 'Star Shooter', category: 'Arcade', desc: 'Defend the galaxy from pixelated aliens.', url: 'https://freeinvaders.org/', thumb: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=600' }
         ];
@@ -141,55 +167,56 @@
             xp: parseInt(localStorage.getItem('nx_xp')) || 0,
             lvl: parseInt(localStorage.getItem('nx_lvl')) || 1,
             theme: localStorage.getItem('nx_theme') || 'dark',
-            stats: JSON.parse(localStorage.getItem('nx_stats')) || {}, // Format: { gameId: { time: 0, launches: 0 } }
+            stats: JSON.parse(localStorage.getItem('nx_stats')) || {},
             activeGameId: null,
             startTime: null
         };
 
-        // --- CORE LOGIC ---
         function init() {
             applyTheme();
             renderSkeletons();
             
-            // Loading screen delay
             window.addEventListener('load', () => {
                 setTimeout(() => {
                     document.getElementById('loader').style.opacity = '0';
                     setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
                     renderGrid();
-                }, 1500);
+                }, 1200);
             });
 
             updateUIStats();
             initParticles();
             setupCursor();
             
-            // Panic Key (`)
+            // Stealth Panic Key (`)
             window.addEventListener('keydown', (e) => { if (e.key === '`') window.location.href = 'https://google.com'; });
 
-            // Tracking Interval: Save time every 30 seconds if a game is active
-            setInterval(updateTimeSpent, 30000);
+            // Tracking Interval: Save time every 10 seconds
+            setInterval(updateTimeSpent, 10000);
         }
 
         function renderSkeletons() {
             const grid = document.getElementById('game-grid');
-            grid.innerHTML = Array(4).fill(0).map(() => `<div class="h-64 rounded-[2rem] skeleton opacity-50"></div>`).join('');
+            grid.innerHTML = Array(4).fill(0).map(() => `<div class="h-64 rounded-[2rem] skeleton opacity-30"></div>`).join('');
         }
 
         function renderGrid() {
             const grid = document.getElementById('game-grid');
+            const search = document.getElementById('search-bar').value.toLowerCase();
+            const cat = document.getElementById('cat-filter').value;
+
             const filtered = games.filter(g => 
-                (document.getElementById('cat-filter').value === 'All' || g.category === document.getElementById('cat-filter').value) &&
-                g.title.toLowerCase().includes(document.getElementById('search-bar').value.toLowerCase())
+                (cat === 'All' || g.category === cat) &&
+                g.title.toLowerCase().includes(search)
             );
 
             grid.innerHTML = filtered.map(g => `
-                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-blue-500/50 transition-all duration-500 cursor-none">
+                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-blue-500/50 transition-all duration-500">
                     <img src="${g.thumb}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
-                    <div class="absolute bottom-6 left-6">
+                    <div class="absolute bottom-6 left-6 text-white">
                         <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${g.category}</span>
-                        <h3 class="text-2xl font-bold text-white">${g.title}</h3>
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
                     </div>
                 </div>
             `).join('');
@@ -203,7 +230,7 @@
             document.getElementById('detail-desc').innerText = g.desc;
             document.getElementById('detail-img').src = g.thumb;
             document.getElementById('detail-cat').innerText = g.category;
-            document.getElementById('detail-time').innerText = Math.floor(gStats.time / 60) + 'm';
+            document.getElementById('detail-time').innerText = formatTime(gStats.time);
             document.getElementById('detail-launches').innerText = gStats.launches;
             
             document.getElementById('play-btn').onclick = () => launchGame(g);
@@ -211,21 +238,17 @@
         }
 
         function launchGame(g) {
-            // Track launches
             if (!state.stats[g.id]) state.stats[g.id] = { time: 0, launches: 0 };
             state.stats[g.id].launches++;
             
-            // Start time tracking session
             state.activeGameId = g.id;
             state.startTime = Date.now();
             
-            // XP Gain
-            state.xp += 15;
+            state.xp += 20;
             if (state.xp >= 100) { state.xp = 0; state.lvl++; }
             saveState();
             updateUIStats();
 
-            // Stealth Launch
             const win = window.open('about:blank', '_blank');
             win.document.title = "Google Docs";
             const iframe = win.document.createElement('iframe');
@@ -239,12 +262,55 @@
                 const now = Date.now();
                 const secondsPassed = Math.floor((now - state.startTime) / 1000);
                 state.stats[state.activeGameId].time += secondsPassed;
-                state.startTime = now; // Reset start point for next interval
+                state.startTime = now;
                 saveState();
+                updateDashboard();
             }
         }
 
-        // --- THEME & UI ---
+        function toggleDashboard() {
+            const db = document.getElementById('stats-dashboard');
+            db.classList.toggle('active');
+            if(db.classList.contains('active')) updateDashboard();
+        }
+
+        function updateDashboard() {
+            let totalSecs = 0;
+            const list = document.getElementById('game-stats-list');
+            list.innerHTML = '';
+
+            games.forEach(g => {
+                const s = state.stats[g.id] || { time: 0, launches: 0 };
+                totalSecs += s.time;
+                if(s.launches > 0) {
+                    list.innerHTML += `
+                        <div class="flex items-center justify-between p-4 rounded-2xl glass">
+                            <div class="flex items-center gap-3">
+                                <img src="${g.thumb}" class="w-10 h-10 rounded-lg object-cover">
+                                <div>
+                                    <p class="font-bold text-sm leading-tight">${g.title}</p>
+                                    <p class="text-[10px] opacity-50 uppercase font-black tracking-widest">${g.category}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-black text-blue-500">${formatTime(s.time)}</p>
+                                <p class="text-[10px] opacity-50">${s.launches} Plays</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('total-time-global').innerText = formatTime(totalSecs);
+            if(list.innerHTML === '') list.innerHTML = '<p class="text-sm opacity-50">No data found. Play a game to start tracking!</p>';
+        }
+
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return h > 0 ? `${h}h ${m}m` : `${m}m`;
+        }
+
         function toggleTheme() {
             state.theme = state.theme === 'dark' ? 'light' : 'dark';
             applyTheme();
@@ -254,19 +320,14 @@
         function applyTheme() {
             const html = document.documentElement;
             const btn = document.getElementById('theme-btn');
-            if (state.theme === 'dark') {
-                html.classList.add('dark');
-                btn.innerText = '🌙';
-            } else {
-                html.classList.remove('dark');
-                btn.innerText = '☀️';
-            }
+            if (state.theme === 'dark') { html.classList.add('dark'); btn.innerText = '🌙'; }
+            else { html.classList.remove('dark'); btn.innerText = '☀️'; }
         }
 
         function updateUIStats() {
             document.getElementById('user-level').innerText = state.lvl;
             document.getElementById('xp-progress').style.width = state.xp + '%';
-            const ranks = ["Noob", "Casual", "Amateur", "Elite", "Pro", "Legend", "Apex"];
+            const ranks = ["Noob", "Rookie", "Elite", "Master", "Pro", "Legend", "Apex"];
             document.getElementById('user-rank').innerText = ranks[Math.min(Math.floor(state.lvl / 2), 6)];
         }
 
@@ -280,11 +341,9 @@
         function showPage(p) {
             document.getElementById('page-home').classList.toggle('hidden', p !== 'home');
             document.getElementById('page-detail').classList.toggle('hidden', p !== 'detail');
-            if(p === 'home') renderGrid();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- VISUAL EFFECTS ---
         function setupCursor() {
             const cursor = document.getElementById('custom-cursor');
             window.addEventListener('mousemove', (e) => {
@@ -292,9 +351,10 @@
                 cursor.style.top = e.clientY + 'px';
             });
             document.addEventListener('mouseover', (e) => {
-                if (e.target.tagName === 'BUTTON' || e.target.closest('[onclick]') || e.target.tagName === 'INPUT') {
-                    cursor.style.transform = 'translate(-50%, -50%) scale(2.5)';
-                    cursor.style.background = 'rgba(59, 130, 246, 0.2)';
+                const interactive = e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('[onclick]') || e.target.tagName === 'INPUT';
+                if (interactive) {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(2.8)';
+                    cursor.style.background = 'rgba(59, 130, 246, 0.1)';
                 } else {
                     cursor.style.transform = 'translate(-50%, -50%) scale(1)';
                     cursor.style.background = 'transparent';
@@ -308,10 +368,10 @@
             let pts = [];
             const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
             window.onresize = resize; resize();
-            for(let i=0; i<50; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3 });
+            for(let i=0; i<40; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4 });
             function draw() {
                 ctx.clearRect(0,0,canvas.width, canvas.height);
-                ctx.fillStyle = state.theme === 'dark' ? "rgba(59, 130, 246, 0.2)" : "rgba(59, 130, 246, 0.1)";
+                ctx.fillStyle = state.theme === 'dark' ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.08)";
                 pts.forEach(p => {
                     p.x += p.vx; p.y += p.vy;
                     if(p.x<0 || p.x>canvas.width) p.vx *= -1; if(p.y<0 || p.y>canvas.height) p.vy *= -1;
