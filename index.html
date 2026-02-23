@@ -46,6 +46,9 @@
 </head>
 <body class="selection:bg-accent/30">
 
+    <!-- Live Background Canvas -->
+    <canvas id="live-bg" class="fixed inset-0 w-full h-full z-[-1]"></canvas>
+
     <!-- Background Music Audio Element -->
     <!-- Added autoplay attribute to try starting immediately -->
     <audio id="bgm" loop preload="auto" autoplay>
@@ -74,6 +77,11 @@
                     <div id="xp-progress" class="h-full bg-accent transition-all duration-500" style="width: 0%"></div>
                 </div>
             </button>
+            <div class="hidden sm:flex items-center gap-2 px-4 py-2 glass rounded-full border border-white/10" title="Daily Login Streak">
+                <span class="text-xl">🔥</span>
+                <span id="streak-counter" class="font-black text-sm">0</span>
+            </div>
+            <button onclick="randomGame()" class="text-xl hover:scale-110 transition-transform" title="Surprise Me! (Random Game)">🎲</button>
             <button onclick="toggleMusic()" id="music-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Background Music">🔊</button>
             <button onclick="toggleCloak()" id="cloak-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Clever Cloak">🥸</button>
             <button onclick="toggleSettings()" class="text-xl hover:scale-110 transition-transform" title="Settings">⚙️</button>
@@ -109,6 +117,19 @@
                     <button onclick="setColor('34, 197, 94')" class="w-12 h-12 rounded-full bg-[#22c55e] border-2 border-white/20 hover:scale-110 transition-transform"></button>
                     <button onclick="setColor('239, 68, 68')" class="w-12 h-12 rounded-full bg-[#ef4444] border-2 border-white/20 hover:scale-110 transition-transform"></button>
                 </div>
+                
+                <p class="text-xs font-bold text-accent uppercase mb-4 mt-8">Data & Advanced</p>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between glass p-4 rounded-xl border border-white/10">
+                        <span class="text-sm font-bold uppercase">Live Background</span>
+                        <input type="checkbox" id="live-bg-toggle" onchange="toggleLiveBg()" class="w-5 h-5 accent-accent cursor-pointer">
+                    </div>
+                    <button onclick="exportData()" class="w-full py-3 glass hover:bg-black/10 dark:hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold uppercase transition-colors">📥 Export Save Data</button>
+                    <label class="w-full py-3 glass hover:bg-black/10 dark:hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold uppercase transition-colors flex items-center justify-center cursor-pointer">
+                        📤 Import Save Data
+                        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
+                    </label>
+                </div>
             </div>
         </div>
     </div>
@@ -136,18 +157,45 @@
         </div>
     </div>
 
+    <!-- Picture-in-Picture Game Window -->
+    <div id="pip-window" class="fixed hidden z-[80] glass border-2 border-accent rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-opacity duration-300" style="width: 800px; height: 500px; top: 120px; left: 50%; transform: translateX(-50%);">
+        <div id="pip-header" class="h-12 bg-black/60 backdrop-blur-md flex justify-between items-center px-6 cursor-move select-none">
+            <span id="pip-window-title" class="font-bold text-white tracking-widest uppercase text-sm">Game Running</span>
+            <div class="flex gap-4 items-center">
+                <button onclick="toggleFullscreenPip()" class="text-white hover:text-accent font-bold text-lg" title="Fullscreen">⛶</button>
+                <button onclick="closePip()" class="text-white hover:text-red-500 font-bold text-xl" title="Close">✕</button>
+            </div>
+        </div>
+        <iframe id="pip-iframe" class="w-full flex-1 border-none bg-black"></iframe>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-container" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[200] flex flex-col gap-2 pointer-events-none"></div>
+
     <!-- Main Content Area -->
     <main class="pt-32 pb-10 max-w-7xl mx-auto px-6 min-h-[calc(100vh-80px)] flex flex-col justify-between">
         <div>
             <!-- Home Library Section -->
             <section id="page-home">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                     <h2 class="text-5xl md:text-6xl font-black tracking-tighter uppercase">My <span class="text-accent transition-colors duration-500">Library</span></h2>
                     <div class="flex gap-4 w-full md:w-auto">
                         <input type="text" id="search-input" oninput="renderGrid()" placeholder="Search games..." class="w-full md:w-64 bg-black/5 dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-accent glass placeholder-current/50 transition-colors">
                         <button onclick="toggleAddGame()" class="shrink-0 px-6 py-4 glass hover:bg-black/5 dark:hover:bg-white/5 rounded-2xl border border-black/10 dark:border-white/10 font-bold transition-all text-xl" title="Add Custom Game">+</button>
                     </div>
                 </div>
+
+                <!-- Categories -->
+                <div class="flex flex-wrap gap-3 mb-8" id="category-filters">
+                    <button onclick="setCategory('All')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold bg-accent text-white transition-colors">All</button>
+                    <button onclick="setCategory('Action')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Action</button>
+                    <button onclick="setCategory('Puzzle')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Puzzle</button>
+                    <button onclick="setCategory('Retro')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Retro</button>
+                    <button onclick="setCategory('Driving')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Driving</button>
+                    <button onclick="setCategory('Sports')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Sports</button>
+                    <button onclick="setCategory('Misc')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Misc</button>
+                </div>
+
                 <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
             </section>
 
@@ -157,8 +205,11 @@
                     <img id="detail-img" class="w-full lg:w-1/2 aspect-video rounded-[2rem] object-cover border shadow-2xl">
                     <div class="w-full lg:w-1/2">
                         <h2 id="detail-title" class="text-6xl font-black mb-4 tracking-tighter"></h2>
-                        <p id="detail-stats" class="text-sm font-bold opacity-60 mb-8">Time: 0m | Plays: 0</p>
-                        <div class="flex gap-4">
+                        <div class="flex items-center gap-4 mb-4">
+                            <p id="detail-stats" class="text-sm font-bold opacity-60">Time: 0m | Plays: 0</p>
+                            <div id="star-rating" class="text-3xl flex gap-1 cursor-pointer select-none drop-shadow-lg"></div>
+                        </div>
+                        <div class="flex gap-4 mt-8">
                             <button id="play-btn" class="px-10 py-5 bg-accent hover:opacity-80 text-white rounded-2xl font-black text-xl transition-all shadow-xl">PLAY GAME</button>
                             <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors">BACK</button>
                         </div>
@@ -181,7 +232,7 @@
 
         const repoBase = "https://brianpitt686-alt.github.io/Brians-Games/Games/";
         
-        const games = [
+        const baseGames = [
             { id: '1', title: '1v1.space', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/1v1space/index.html', cover: 'https://1kh0.github.io/projects/1v1space/thumb.png' },
             { id: '2', title: '2048', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/2048/index.html', cover: 'https://1kh0.github.io/projects/2048/thumb.png' },
             { id: '3', title: '9007199254740992', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/9007199254740992/index.html', cover: 'https://1kh0.github.io/projects/9007199254740992/logo-4.png' },
@@ -259,8 +310,30 @@
             { id: '105', title: 'Wordle', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/wordle/index.html', cover: 'https://1kh0.github.io/projects/wordle/thumb.png' },
             { id: '106', title: 'World’s Hardest Game', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/worlds-hardest-game/index.html', cover: 'https://1kh0.github.io/projects/worlds-hardest-game/thumb.png' },
             { id: '107', title: 'World’s Hardest Game 2', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/worlds-hardest-game-2/index.html', cover: 'https://1kh0.github.io/projects/worlds-hardest-game-2/thumb.png' },
-            { id: '108', title: 'You Are Bezos', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/you-are-bezos/index.html', cover: 'https://1kh0.github.io/projects/you-are-bezos/thumb.png' },
+            { id: '108', title: 'You Are Bezos', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/you-are-bezos/index.html', cover: 'https://1kh0.github.io/projects/you-are-bezos/thumb.png' }
         ];
+
+        // Games added from secondary site request
+        const additionalGames = [
+            { id: '200', title: 'Run 3', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/run3/index.html', cover: 'https://1kh0.github.io/projects/run3/thumb.png', category: 'Action' },
+            { id: '201', title: 'BitLife', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/bitlife/index.html', cover: 'https://1kh0.github.io/projects/bitlife/thumb.png', category: 'Misc' },
+            { id: '202', title: 'Subway Surfers', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/subwaysurfers/index.html', cover: 'https://1kh0.github.io/projects/subwaysurfers/thumb.png', category: 'Action' },
+            { id: '203', title: 'FNAF Web', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/fnaf/index.html', cover: 'https://1kh0.github.io/projects/fnaf/thumb.png', category: 'Action' },
+            { id: '204', title: 'Shell Shockers', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/shellshockers/index.html', cover: 'https://1kh0.github.io/projects/shellshockers/thumb.png', category: 'Action' },
+            { id: '205', title: 'Crossy Road', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/crossyroad/index.html', cover: 'https://1kh0.github.io/projects/crossyroad/thumb.png', category: 'Action' }
+        ];
+
+        // Dynamically assign categories based on keywords
+        const games = baseGames.map(g => {
+            let cat = 'Misc';
+            const t = g.title.toLowerCase();
+            if(t.includes('moto') || t.includes('hexgl') || t.includes('drive')) cat = 'Driving';
+            else if(t.includes('2048') || t.includes('quiz') || t.includes('wordle') || t.includes('minesweeper') || t.includes('bloxorz')) cat = 'Puzzle';
+            else if(t.includes('retro bowl') || t.includes('basketball') || t.includes('duck life') || t.includes('golf')) cat = 'Sports';
+            else if(t.includes('mario') || t.includes('vex') || t.includes('gun') || t.includes('krunker') || t.includes('smash') || t.includes('slope') || t.includes('run') || t.includes('tunnel')) cat = 'Action';
+            else if(t.includes('mario') || t.includes('retro') || t.includes('classic') || t.includes('wolf')) cat = 'Retro';
+            return { ...g, category: cat };
+        }).concat(additionalGames);
 
         // Safe JSON parsing function to prevent errors on bad localStorage data
         function getSavedJSON(key, defaultVal) {
@@ -275,12 +348,20 @@
         let state = {
             theme: localStorage.getItem('nx_theme') || 'dark',
             color: localStorage.getItem('nx_color') || '59, 130, 246',
-            // Default to true (ON) unless specifically saved as false
             musicOn: localStorage.getItem('nx_music') !== 'false', 
             stats: getSavedJSON('nx_stats', {}),
             favorites: getSavedJSON('nx_favorites', []),
             customGames: getSavedJSON('nx_custom_games', []),
             hiddenGames: getSavedJSON('nx_hidden_games', []),
+            
+            // New Advanced State
+            ratings: getSavedJSON('nx_ratings', {}),
+            achievements: getSavedJSON('nx_achievements', []),
+            streak: parseInt(localStorage.getItem('nx_streak') || '0'),
+            lastLogin: localStorage.getItem('nx_lastLogin') || '',
+            liveBgOn: localStorage.getItem('nx_liveBg') === 'true',
+            currentCategory: 'All',
+
             activeGameId: null,
             startTime: null
         };
@@ -293,7 +374,177 @@
             localStorage.setItem('nx_favorites', JSON.stringify(state.favorites));
             localStorage.setItem('nx_custom_games', JSON.stringify(state.customGames));
             localStorage.setItem('nx_hidden_games', JSON.stringify(state.hiddenGames));
+            
+            // Save New Data
+            localStorage.setItem('nx_ratings', JSON.stringify(state.ratings));
+            localStorage.setItem('nx_achievements', JSON.stringify(state.achievements));
+            localStorage.setItem('nx_streak', state.streak.toString());
+            localStorage.setItem('nx_lastLogin', state.lastLogin);
+            localStorage.setItem('nx_liveBg', state.liveBgOn);
+            
             updateRankUI();
+        }
+
+        // --- NEW GLOBAL FUNCTIONS ---
+
+        function showToast(msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'bg-accent text-white px-6 py-3 rounded-full font-bold shadow-2xl transition-all duration-500 transform translate-y-10 opacity-0';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            
+            setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
+            setTimeout(() => { 
+                toast.classList.add('translate-y-10', 'opacity-0'); 
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        function unlockBadge(badgeId, desc) {
+            if(!state.achievements.includes(badgeId)) {
+                state.achievements.push(badgeId);
+                save();
+                showToast(`🏆 Achievement Unlocked: ${badgeId}!`);
+            }
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", "nexus_save.json");
+            dlAnchorElem.click();
+            showToast("✅ Save Data Exported");
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    Object.assign(state, imported);
+                    save();
+                    location.reload();
+                } catch(err) {
+                    alert("Invalid Save File!");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function setCategory(cat) {
+            state.currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if(btn.innerText === cat) {
+                    btn.className = 'cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold bg-accent text-white transition-colors';
+                } else {
+                    btn.className = 'cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors';
+                }
+            });
+            renderGrid();
+        }
+
+        function randomGame() {
+            let allGames = [...games, ...state.customGames].filter(g => !state.hiddenGames.includes(g.id));
+            if(allGames.length === 0) return;
+            const random = allGames[Math.floor(Math.random() * allGames.length)];
+            openDetail(random.id);
+        }
+
+        function rateGame(stars) {
+            const id = document.getElementById('page-detail').getAttribute('data-id');
+            if(!id) return;
+            state.ratings[id] = stars;
+            save();
+            renderStars(stars);
+            renderGrid();
+        }
+
+        function renderStars(rating) {
+            let html = '';
+            for(let i=1; i<=5; i++) {
+                html += `<span onclick="rateGame(${i})" class="${i <= rating ? 'text-yellow-400' : 'text-gray-500'} hover:text-yellow-300 transition-colors">★</span>`;
+            }
+            document.getElementById('star-rating').innerHTML = html;
+        }
+
+        // Live Background Canvas Logic
+        const canvas = document.getElementById('live-bg');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        function initCanvas() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            for(let i=0; i<60; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: (Math.random() - 0.5) * 0.5,
+                    vy: (Math.random() - 0.5) * 0.5,
+                    size: Math.random() * 2 + 0.5
+                });
+            }
+            document.getElementById('live-bg-toggle').checked = state.liveBgOn;
+            animateCanvas();
+        }
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function animateCanvas() {
+            requestAnimationFrame(animateCanvas);
+            if (!state.liveBgOn) {
+                canvas.style.display = 'none';
+                return;
+            }
+            canvas.style.display = 'block';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = document.documentElement.className === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+            
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+                if (p.x < 0 || p.x > canvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function toggleLiveBg() {
+            state.liveBgOn = document.getElementById('live-bg-toggle').checked;
+            save();
+        }
+        
+        function checkStreak() {
+            const today = new Date().toDateString();
+            if (state.lastLogin === today) {
+                document.getElementById('streak-counter').innerText = state.streak;
+                return;
+            }
+            
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            if (state.lastLogin === yesterday.toDateString()) {
+                state.streak++;
+            } else if (state.lastLogin) {
+                state.streak = 1; // Streak broken
+            } else {
+                state.streak = 1; 
+            }
+            state.lastLogin = today;
+            save();
+            document.getElementById('streak-counter').innerText = state.streak;
+            
+            if(state.streak > 3) unlockBadge('On Fire', '3 Day Streak');
         }
 
         // --- MUSIC PLAYER ---
@@ -321,23 +572,49 @@
             state.stats[g.id].launches++;
             state.activeGameId = g.id;
             state.startTime = Date.now();
+            
+            // Check Achievements
+            const hour = new Date().getHours();
+            if (hour >= 23 || hour <= 4) unlockBadge('Night Owl');
+            
+            const playedCount = Object.values(state.stats).filter(s => s.launches > 0).length;
+            if (playedCount >= 20) unlockBadge('Explorer');
+
             save();
 
             const targetUrl = g.url || (repoBase + g.folder + "/index.html");
             
-            const win = window.open('', '_blank');
-            if (win) {
-                win.document.body.style.margin = "0";
-                win.document.body.style.height = "100vh";
-                win.document.title = "Google Docs";
-                const ifr = win.document.createElement('iframe');
-                ifr.src = targetUrl;
-                ifr.style.width = "100%";
-                ifr.style.height = "100%";
-                ifr.style.border = "none";
-                win.document.body.appendChild(ifr);
+            // Launch in Picture-in-Picture
+            const pip = document.getElementById('pip-window');
+            const iframe = document.getElementById('pip-iframe');
+            document.getElementById('pip-window-title').innerText = g.title;
+            
+            iframe.src = targetUrl;
+            pip.classList.remove('hidden');
+        }
+
+        function closePip() {
+            document.getElementById('pip-window').classList.add('hidden');
+            document.getElementById('pip-iframe').src = '';
+            state.activeGameId = null;
+        }
+
+        function toggleFullscreenPip() {
+            const pip = document.getElementById('pip-window');
+            if (pip.style.width === '100vw') {
+                pip.style.width = '800px';
+                pip.style.height = '500px';
+                pip.style.top = '120px';
+                pip.style.left = '50%';
+                pip.style.transform = 'translateX(-50%)';
+                pip.style.borderRadius = '1rem';
             } else {
-                alert("POPUP BLOCKED! Please allow popups for this site to play.");
+                pip.style.width = '100vw';
+                pip.style.height = '100vh';
+                pip.style.top = '0';
+                pip.style.left = '0';
+                pip.style.transform = 'none';
+                pip.style.borderRadius = '0';
             }
         }
 
@@ -382,28 +659,43 @@
             const grid = document.getElementById('game-grid');
             const searchTerm = document.getElementById('search-input').value.toLowerCase();
             
-            // Filter out deleted/hidden games
             let allGames = [...games, ...state.customGames].filter(g => !state.hiddenGames.includes(g.id));
             
             if (searchTerm) {
                 allGames = allGames.filter(g => g.title.toLowerCase().includes(searchTerm));
             }
+            
+            // Filter by selected category
+            if (state.currentCategory !== 'All') {
+                allGames = allGames.filter(g => (g.category || 'Misc') === state.currentCategory);
+            }
 
-            // Sort logic: Favorites always top, then alphabetical
+            // Sort logic: Favorites -> Ratings -> Alphabetical
             allGames.sort((a, b) => {
                 const aFav = state.favorites.includes(a.id);
                 const bFav = state.favorites.includes(b.id);
                 if (aFav !== bFav) return bFav - aFav; 
+                
+                const aRate = state.ratings[a.id] || 0;
+                const bRate = state.ratings[b.id] || 0;
+                if (aRate !== bRate) return bRate - aRate;
+
                 return a.title.localeCompare(b.title);
             });
 
             grid.innerHTML = allGames.map(g => {
                 const isFav = state.favorites.includes(g.id);
+                const rating = state.ratings[g.id] || 0;
+                let starsHTML = '';
+                if(rating > 0) starsHTML = `<div class="absolute top-4 left-1/2 transform -translate-x-1/2 text-yellow-400 text-xs font-black drop-shadow-md z-10">${'★'.repeat(rating)}</div>`;
+
                 return `
                 <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-accent/50 transition-all duration-300 cursor-pointer bg-black/20">
                     <img src="${g.cover}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/0f172a/cccccc?text=${encodeURIComponent(g.title)}&font=Montserrat'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                     
+                    ${starsHTML}
+
                     <!-- Delete Game Button -->
                     <button onclick="deleteGame(event, '${g.id}')" class="absolute top-4 left-4 text-xl z-10 transition-transform hover:scale-125 text-white/30 hover:text-red-500 bg-black/30 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md" title="Remove Game">
                         🗑️
@@ -450,6 +742,9 @@
             let allGames = [...games, ...state.customGames];
             const g = allGames.find(i => i.id === id);
             if (!g) return;
+
+            document.getElementById('page-detail').setAttribute('data-id', id);
+            renderStars(state.ratings[id] || 0);
 
             const s = state.stats[id] || { time: 0, launches: 0 };
             document.getElementById('detail-title').innerText = g.title;
@@ -532,10 +827,14 @@
                 id: 'c_' + Date.now(),
                 title: title,
                 url: url,
-                cover: img || `https://placehold.co/600x400/0f172a/cccccc?text=${encodeURIComponent(title)}&font=Montserrat`
+                cover: img || `https://placehold.co/600x400/0f172a/cccccc?text=${encodeURIComponent(title)}&font=Montserrat`,
+                category: 'Misc'
             };
 
             state.customGames.push(newGame);
+            
+            if(state.customGames.length >= 3) unlockBadge('Modder');
+            
             save();
             toggleAddGame();
             renderGrid();
@@ -572,9 +871,48 @@
             c.style.left = e.clientX + 'px';
             c.style.top = e.clientY + 'px';
         });
+        
+        // --- PiP Drag Logic ---
+        const pipHeader = document.getElementById('pip-header');
+        const pipWindow = document.getElementById('pip-window');
+        let isDragging = false, startX, startY, startLeft, startTop;
+
+        pipHeader.addEventListener('mousedown', (e) => {
+            if(e.target.tagName === 'BUTTON') return;
+            isDragging = true;
+            startX = e.clientX; startY = e.clientY;
+            pipWindow.style.transform = 'none'; // Strip centered transform before drag
+            startLeft = pipWindow.offsetLeft;
+            startTop = pipWindow.offsetTop;
+        });
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            pipWindow.style.left = `${startLeft + (e.clientX - startX)}px`;
+            pipWindow.style.top = `${startTop + (e.clientY - startY)}px`;
+        });
+        window.addEventListener('mouseup', () => isDragging = false);
+
+        // --- Stealth & Auto-Mute ---
+        window.addEventListener('blur', () => {
+            bgm.pause();
+            if(!pipWindow.classList.contains('hidden')) pipWindow.style.opacity = '0.02'; // Dim stealth
+        });
+        window.addEventListener('focus', () => {
+            if (state.musicOn) bgm.play().catch(()=>{});
+            pipWindow.style.opacity = '1';
+        });
+
+        // Panic Key Action (` or ~ or Esc key)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === '`' || e.key === '~' || e.key === 'Escape') {
+                window.location.href = 'https://classroom.google.com';
+            }
+        });
 
         // Initialize UI from saved state
         updateMusicUI();
+        initCanvas();
+        checkStreak();
 
         // Attempt to play immediately on load
         if (state.musicOn) {
@@ -602,7 +940,7 @@
         }, 1000);
 
         setInterval(updateTimeSpent, 5000);
-              
+            
     </script>
 </body>
 </html>
