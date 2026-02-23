@@ -57,7 +57,7 @@
 
     <div id="loader">
         <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h1 class="text-white font-black tracking-widest text-xl animate-pulse uppercase">Nexus Elite</h1>
+        <h1 class="text-white font-black tracking-widest text-xl animate-pulse uppercase">Syncing Games...</h1>
     </div>
 
     <canvas id="particleCanvas" class="fixed inset-0 -z-10"></canvas>
@@ -73,7 +73,7 @@
             <div class="flex items-center gap-6">
                 <button onclick="toggleDashboard()" class="flex flex-col items-end group">
                     <div class="flex items-center gap-2">
-                        <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">NOOB</span>
+                        <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest">NOOB</span>
                         <span class="text-xs font-bold">Lv. <span id="user-level">1</span></span>
                     </div>
                     <div class="w-32 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
@@ -87,33 +87,23 @@
 
     <div id="stats-dashboard" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[60] glass border-l p-10 flex flex-col">
         <div class="flex justify-between items-center mb-10">
-            <h2 class="text-3xl font-black tracking-tighter">ELITE <span class="text-blue-500">STATS</span></h2>
-            <button onclick="toggleDashboard()" class="text-sm font-bold opacity-50 hover:opacity-100">CLOSE</button>
+            <h2 class="text-3xl font-black tracking-tighter uppercase">Profile <span class="text-blue-500">Stats</span></h2>
+            <button onclick="toggleDashboard()" class="text-sm font-bold opacity-50 hover:opacity-100 uppercase">Close</button>
         </div>
-        <div class="space-y-8 overflow-y-auto no-scrollbar pb-10">
-            <div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20">
+        <div id="game-stats-list" class="space-y-4 overflow-y-auto no-scrollbar pb-10">
+            <div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20 mb-4">
                 <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Playtime</p>
-                <p id="total-time-global" class="text-4xl font-black">0h 0m</p>
+                <p id="total-time-global" class="text-4xl font-black">0m</p>
             </div>
-            <div>
-                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Activity Log</h3>
-                <div id="game-stats-list" class="space-y-4"></div>
             </div>
-        </div>
     </div>
 
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-6">
         <section id="page-home">
             <div class="mb-12">
-                <h2 class="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6 uppercase">My Gaming<br><span class="text-blue-500">Library</span></h2>
+                <h2 class="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6 uppercase">Brian's<br><span class="text-blue-500">Games</span></h2>
                 <div class="flex flex-wrap gap-4">
-                    <input type="text" id="search-bar" placeholder="Find a game..." class="px-6 py-4 rounded-2xl glass w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
-                    <select id="cat-filter" class="px-6 py-4 rounded-2xl glass outline-none">
-                        <option value="All">All Categories</option>
-                        <option value="Arcade">Arcade</option>
-                        <option value="Strategy">Strategy</option>
-                        <option value="Action">Action</option>
-                    </select>
+                    <input type="text" id="search-bar" placeholder="Find your game..." class="px-6 py-4 rounded-2xl glass w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
                 </div>
             </div>
             <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
@@ -125,7 +115,6 @@
                     <img id="detail-img" src="" class="w-full h-full object-cover">
                 </div>
                 <div class="w-full lg:w-1/2">
-                    <span id="detail-cat" class="text-blue-500 font-bold text-xs tracking-widest uppercase"></span>
                     <h2 id="detail-title" class="text-6xl font-black mt-4 mb-2 tracking-tighter"></h2>
                     <div class="flex gap-4 mb-6 text-sm font-bold opacity-60">
                         <p>Playtime: <span id="detail-time" class="text-blue-500">0m</span></p>
@@ -133,7 +122,7 @@
                     </div>
                     <p id="detail-desc" class="text-xl opacity-70 mb-10 leading-relaxed"></p>
                     <div class="flex gap-4">
-                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all active:scale-95 shadow-xl shadow-blue-600/30">LAUNCH</button>
+                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all shadow-xl">LAUNCH</button>
                         <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold">BACK</button>
                     </div>
                 </div>
@@ -142,32 +131,125 @@
     </main>
 
     <script>
-        // BASE URL for your GitHub repository files
+        // The URL format must be exact. Space characters in folder names must be %20.
         const repoBase = "https://brianpitt686-alt.github.io/Brians-Games/Games/";
         
-        // ADDED YOUR GAMES FROM REPOSITORY
         const games = [
-            { id: '1', title: '1', category: 'Arcade', desc: 'Classic gameplay from your library.', folder: '1' },
-            { id: '2', title: '1v1.lol', category: 'Action', desc: 'Competitive building and shooting.', folder: '1v1.lol' },
-            { id: '3', title: '2048', category: 'Strategy', desc: 'The original number puzzle.', folder: '2048' },
-            { id: '4', title: 'A Dance of Fire and Ice', category: 'Arcade', desc: 'Rhythm game challenge.', folder: 'A%20Dance%20of%20Fire%20and%20Ice' },
-            { id: '5', title: 'Backrooms', category: 'Action', desc: 'Escape the endless yellow maze.', folder: 'Backrooms' },
-            { id: '6', title: 'Basket Stars', category: 'Arcade', desc: 'Hoops and high scores.', folder: 'Basket%20Stars' },
-            { id: '7', title: 'Bitlife', category: 'Strategy', desc: 'Live a whole second life.', folder: 'Bitlife' },
-            { id: '8', title: 'Cookie Clicker', category: 'Arcade', desc: 'Bake an infinite number of cookies.', folder: 'Cookie%20Clicker' },
-            { id: '9', title: 'Crossy Road', category: 'Arcade', desc: 'Why did the chicken cross the road?', folder: 'Crossy%20Road' },
-            { id: '10', title: 'Doodle Jump', category: 'Arcade', desc: 'Bounce to new heights.', folder: 'Doodle%20Jump' },
-            { id: '11', title: 'Drive Mad', category: 'Arcade', desc: 'Physics-based driving chaos.', folder: 'Drive%20Mad' },
-            { id: '12', title: 'Eaglercraft', category: 'Action', desc: 'Minecraft in your browser.', folder: 'Eaglercraft' },
-            { id: '13', title: 'Friday Night Funkin', category: 'Arcade', desc: 'Show off your rhythm skills.', folder: 'Friday%20Night%20Funkin' },
-            { id: '14', title: 'Geometry Dash', category: 'Arcade', desc: 'Jump and fly through danger.', folder: 'Geometry%20Dash' },
-            { id: '15', title: 'Happy Wheels', category: 'Action', desc: 'Bloody physics fun.', folder: 'Happy%20Wheels' },
-            { id: '16', title: 'Mario', category: 'Arcade', desc: 'The legend returns.', folder: 'Mario' },
-            { id: '17', title: 'Slope', category: 'Arcade', desc: 'Don\'t fall off the edge!', folder: 'Slope' },
-            { id: '18', title: 'Stickman Hook', category: 'Arcade', desc: 'Swing like a pro.', folder: 'Stickman%20Hook' },
-            { id: '19', title: 'Subway Surfers', category: 'Arcade', desc: 'Run through the train yard.', folder: 'Subway%20Surfers' },
-            { id: '20', title: 'Tunnel Rush', category: 'Arcade', desc: 'Speed through the neon tunnels.', folder: 'Tunnel%20Rush' }
-        ];
+    { 
+        id: '1', 
+        title: '1v1.space', 
+        url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/1v1space/index.html',
+        cover: 'https://assets.fortnitecreativehq.com/wp-content/uploads/2023/03/31145625/screen_comp-1907-1040x585.jpeg ' // Replace with your image link
+    },
+    { 
+        id: '2', 
+        title: '2048', 
+        url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/2048/index.html',
+        cover: 'https://play-lh.googleusercontent.com/bZregCeEpzMwRoocLnsYb4Te-vPPHkW1k5H1xsQ3qK9yE00fixpWu5fNsUz3ut2IiDHn' 
+    },
+    { 
+        id: '3', 
+        title: 'A Dance of Fire and Ice', 
+        folder: 'A%20Dance%20of%20Fire%20and%20Ice',
+        cover: 'https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?w=500'
+    },
+    { 
+        id: '4', 
+        title: 'Backrooms', 
+        folder: 'Backrooms',
+        cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500'
+    },
+    { 
+        id: '5', 
+        title: 'Basket Stars', 
+        folder: 'Basket%20Stars',
+        cover: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500'
+    },
+    { 
+        id: '6', 
+        title: 'Bitlife', 
+        folder: 'Bitlife',
+        cover: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=500'
+    },
+    { 
+        id: '7', 
+        title: 'Cookie Clicker', 
+        folder: 'Cookie%20Clicker',
+        cover: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?w=500'
+    },
+    { 
+        id: '8', 
+        title: 'Crossy Road', 
+        folder: 'Crossy%20Road',
+        cover: 'https://images.unsplash.com/photo-1553481187-be93c21490a9?w=500'
+    },
+    { 
+        id: '9', 
+        title: 'Doodle Jump', 
+        folder: 'Doodle%20Jump',
+        cover: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=500'
+    },
+    { 
+        id: '10', 
+        title: 'Drive Mad', 
+        folder: 'Drive%20Mad',
+        cover: 'https://images.unsplash.com/photo-1595079676339-1534801ad6cf?w=500'
+    },
+    { 
+        id: '11', 
+        title: 'Eaglercraft', 
+        folder: 'Eaglercraft',
+        cover: 'https://images.unsplash.com/photo-1587573089734-09cb69c0f2b4?w=500'
+    },
+    { 
+        id: '12', 
+        title: 'Friday Night Funkin', 
+        folder: 'Friday%20Night%20Funkin',
+        cover: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=500'
+    },
+    { 
+        id: '13', 
+        title: 'Geometry Dash', 
+        folder: 'Geometry%20Dash',
+        cover: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500'
+    },
+    { 
+        id: '14', 
+        title: 'Happy Wheels', 
+        folder: 'Happy%20Wheels',
+        cover: 'https://images.unsplash.com/photo-1599249300675-c39f1dd2d6be?w=500'
+    },
+    { 
+        id: '15', 
+        title: 'Mario', 
+        folder: 'Mario',
+        cover: 'https://images.unsplash.com/photo-1612684505953-24749bf3ec27?w=500'
+    },
+    { 
+        id: '16', 
+        title: 'Slope', 
+        folder: 'Slope',
+        cover: 'https://images.unsplash.com/photo-1558655146-d09347e92766?w=500'
+    },
+    { 
+        id: '17', 
+        title: 'Stickman Hook', 
+        folder: 'Stickman%20Hook',
+        cover: 'https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=500'
+    },
+    { 
+        id: '18', 
+        title: 'Subway Surfers', 
+        folder: 'Subway%20Surfers',
+        cover: 'https://images.unsplash.com/photo-1471180625745-944903837c21?w=500'
+    },
+    { 
+        id: '19', 
+        title: 'Tunnel Rush', 
+        folder: 'Tunnel%20Rush',
+        cover: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500'
+    }
+];
 
         let state = {
             xp: parseInt(localStorage.getItem('nx_xp')) || 0,
@@ -181,13 +263,11 @@
         function init() {
             applyTheme();
             renderSkeletons();
-            window.addEventListener('load', () => {
-                setTimeout(() => {
-                    document.getElementById('loader').style.opacity = '0';
-                    setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
-                    renderGrid();
-                }, 1000);
-            });
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
+                renderGrid();
+            }, 1000);
             updateUIStats();
             initParticles();
             setupCursor();
@@ -197,20 +277,14 @@
         function renderGrid() {
             const grid = document.getElementById('game-grid');
             const search = document.getElementById('search-bar').value.toLowerCase();
-            const cat = document.getElementById('cat-filter').value;
-
-            const filtered = games.filter(g => 
-                (cat === 'All' || g.category === cat) &&
-                g.title.toLowerCase().includes(search)
-            );
+            const filtered = games.filter(g => g.title.toLowerCase().includes(search));
 
             grid.innerHTML = filtered.map(g => `
                 <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-blue-500/50 transition-all duration-500">
-                    <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?w=500" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-50">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    <img src="https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=500" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-40">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/90 to-transparent"></div>
                     <div class="absolute bottom-6 left-6 text-white">
-                        <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${g.category}</span>
-                        <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <h3 class="text-2xl font-bold uppercase tracking-tighter">${g.title}</h3>
                     </div>
                 </div>
             `).join('');
@@ -220,9 +294,7 @@
             const g = games.find(i => i.id === id);
             const gStats = state.stats[id] || { time: 0, launches: 0 };
             document.getElementById('detail-title').innerText = g.title;
-            document.getElementById('detail-desc').innerText = g.desc;
-            document.getElementById('detail-img').src = "https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800";
-            document.getElementById('detail-cat').innerText = g.category;
+            document.getElementById('detail-img').src = "https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=800";
             document.getElementById('detail-time').innerText = formatTime(gStats.time);
             document.getElementById('detail-launches').innerText = gStats.launches;
             document.getElementById('play-btn').onclick = () => launchGame(g);
@@ -234,12 +306,12 @@
             state.stats[g.id].launches++;
             state.activeGameId = g.id;
             state.startTime = Date.now();
-            state.xp += 20;
-            if (state.xp >= 100) { state.xp = 0; state.lvl++; }
-            saveState();
-            updateUIStats();
             
+            saveState();
+            
+            // This is the direct link to your GitHub Pages hosted game
             const gameUrl = repoBase + g.folder + "/index.html";
+            
             const win = window.open('about:blank', '_blank');
             win.document.title = "Google Docs";
             const iframe = win.document.createElement('iframe');
@@ -267,20 +339,20 @@
         function updateDashboard() {
             let totalSecs = 0;
             const list = document.getElementById('game-stats-list');
-            list.innerHTML = '';
+            list.innerHTML = `<div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20 mb-4">
+                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Playtime</p>
+                <p id="total-time-global" class="text-4xl font-black">0m</p>
+            </div>`;
+            
             games.forEach(g => {
                 const s = state.stats[g.id] || { time: 0, launches: 0 };
                 totalSecs += s.time;
                 if(s.launches > 0) {
                     list.innerHTML += `
                         <div class="flex items-center justify-between p-4 rounded-2xl glass">
-                            <div>
-                                <p class="font-bold text-sm leading-tight">${g.title}</p>
-                                <p class="text-[10px] opacity-50 uppercase font-black tracking-widest">${g.category}</p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-xs font-black text-blue-500">${formatTime(s.time)}</p>
-                                <p class="text-[10px] opacity-50">${s.launches} Plays</p>
+                            <p class="font-bold text-sm uppercase">${g.title}</p>
+                            <div class="text-right text-xs">
+                                <p class="font-black text-blue-500">${formatTime(s.time)}</p>
                             </div>
                         </div>
                     `;
@@ -290,51 +362,42 @@
         }
 
         function formatTime(seconds) {
-            const h = Math.floor(seconds / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            return h > 0 ? `${h}h ${m}m` : `${m}m`;
-        }
-
-        function toggleTheme() {
-            state.theme = state.theme === 'dark' ? 'light' : 'dark';
-            applyTheme(); saveState();
+            const m = Math.floor(seconds / 60);
+            return m + 'm';
         }
 
         function applyTheme() {
             const html = document.documentElement;
-            const btn = document.getElementById('theme-btn');
-            if (state.theme === 'dark') { html.classList.add('dark'); btn.innerText = '🌙'; }
-            else { html.classList.remove('dark'); btn.innerText = '☀️'; }
+            state.theme === 'dark' ? html.classList.add('dark') : html.classList.remove('dark');
+            document.getElementById('theme-btn').innerText = state.theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            applyTheme();
+            saveState();
         }
 
         function updateUIStats() {
             document.getElementById('user-level').innerText = state.lvl;
-            document.getElementById('xp-progress').style.width = state.xp + '%';
-            const ranks = ["Noob", "Casual", "Gamer", "Pro", "Legend", "Apex"];
-            document.getElementById('user-rank').innerText = ranks[Math.min(Math.floor(state.lvl / 2), 5)];
+            document.getElementById('xp-progress').style.width = (state.xp % 100) + '%';
         }
 
         function saveState() {
-            localStorage.setItem('nx_xp', state.xp);
-            localStorage.setItem('nx_lvl', state.lvl);
-            localStorage.setItem('nx_theme', state.theme);
             localStorage.setItem('nx_stats', JSON.stringify(state.stats));
+            localStorage.setItem('nx_theme', state.theme);
         }
 
         function showPage(p) {
             document.getElementById('page-home').classList.toggle('hidden', p !== 'home');
             document.getElementById('page-detail').classList.toggle('hidden', p !== 'detail');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function setupCursor() {
             const cursor = document.getElementById('custom-cursor');
             window.addEventListener('mousemove', (e) => {
-                cursor.style.left = e.clientX + 'px'; cursor.style.top = e.clientY + 'px';
-            });
-            document.addEventListener('mouseover', (e) => {
-                const interactive = e.target.tagName === 'BUTTON' || e.target.closest('[onclick]') || e.target.tagName === 'INPUT';
-                cursor.style.transform = interactive ? 'translate(-50%, -50%) scale(2.5)' : 'translate(-50%, -50%) scale(1)';
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
             });
         }
 
@@ -344,14 +407,14 @@
             let pts = [];
             const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
             window.onresize = resize; resize();
-            for(let i=0; i<30; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
+            for(let i=0; i<30; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: 0.2, vy: 0.2 });
             function draw() {
                 ctx.clearRect(0,0,canvas.width, canvas.height);
                 ctx.fillStyle = "rgba(59, 130, 246, 0.1)";
                 pts.forEach(p => {
                     p.x += p.vx; p.y += p.vy;
-                    if(p.x<0 || p.x>canvas.width) p.vx *= -1; if(p.y<0 || p.y>canvas.height) p.vy *= -1;
-                    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                    if(p.x > canvas.width) p.x = 0; if(p.y > canvas.height) p.y = 0;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI*2); ctx.fill();
                 });
                 requestAnimationFrame(draw);
             }
@@ -359,12 +422,10 @@
         }
 
         function renderSkeletons() {
-            document.getElementById('game-grid').innerHTML = Array(8).fill(0).map(() => `<div class="h-64 rounded-[2rem] skeleton opacity-30"></div>`).join('');
+            document.getElementById('game-grid').innerHTML = Array(8).fill(0).map(() => `<div class="h-64 rounded-[2rem] skeleton opacity-20"></div>`).join('');
         }
 
         document.getElementById('search-bar').oninput = renderGrid;
-        document.getElementById('cat-filter').onchange = renderGrid;
-
         init();
     </script>
 </body>
