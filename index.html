@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A fully functional, static games portal.">
+    <title>Nexus Games</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
+    
+    <style>
+        .game-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .game-card:hover { transform: translateY(-8px); shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        /* Smooth transitions for theme toggle */
+        body { transition: background-color 0.3s, color 0.3s; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen">
+
+    <nav class="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="text-xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent cursor-pointer" onclick="showPage('home')">
+                NEXUS GAMES
+            </h1>
+            <div class="flex items-center gap-4">
+                <button id="theme-toggle" class="p-2 rounded-xl bg-slate-200 dark:bg-slate-800 hover:scale-110 transition-transform">🌓</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <section id="page-home" class="page-content">
+            <div id="recent-section" class="mb-10 hidden">
+                <h2 class="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-4">Recently Played</h2>
+                <div id="recent-grid" class="flex gap-4 overflow-x-auto pb-4 no-scrollbar"></div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4 mb-8">
+                <div class="relative flex-grow">
+                    <input type="text" id="search-input" placeholder="Search games..." 
+                        class="w-full pl-4 pr-10 py-3 rounded-2xl border dark:border-slate-800 bg-white dark:bg-slate-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                </div>
+                <select id="category-select" class="px-4 py-3 rounded-2xl border dark:border-slate-800 bg-white dark:bg-slate-900 outline-none cursor-pointer">
+                    <option value="All">All Categories</option>
+                    <option value="Arcade">Arcade</option>
+                    <option value="Puzzle">Puzzle</option>
+                    <option value="Casual">Casual</option>
+                </select>
+            </div>
+
+            <div id="game-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                </div>
+        </section>
+
+        <section id="page-detail" class="page-content hidden">
+            <button onclick="showPage('home')" class="mb-6 text-blue-500 hover:text-blue-600 flex items-center gap-2">
+                <span>←</span> Back to Discovery
+            </button>
+            <div class="flex flex-col md:flex-row gap-10 items-center md:items-start">
+                <img id="detail-img" src="" alt="" class="w-full max-w-sm rounded-3xl shadow-2xl">
+                <div class="flex-grow">
+                    <span id="detail-cat" class="text-blue-500 font-bold tracking-widest text-xs uppercase"></span>
+                    <h2 id="detail-title" class="text-5xl font-black mt-2 mb-4"></h2>
+                    <p id="detail-desc" class="text-lg text-slate-600 dark:text-slate-400 mb-8 max-w-xl"></p>
+                    <div class="flex gap-4">
+                        <button id="btn-play" class="bg-blue-600 hover:bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold text-lg transition-all active:scale-95 shadow-lg shadow-blue-500/20">
+                            PLAY NOW
+                        </button>
+                        <button id="btn-fav" class="bg-slate-200 dark:bg-slate-800 px-6 py-4 rounded-2xl font-bold transition-all">
+                            ❤️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // 1. DATA (Embedded JSON)
+        const gamesData = [
+            { id: '1', title: '2048', description: 'The classic number sliding puzzle. Strategy and math combined.', url: 'https://play2048.co/', thumbnail: 'https://images.unsplash.com/photo-1595303526913-c7037797ebe7?w=400&h=300&fit=crop', category: 'Puzzle', tags: ['math', 'classic'] },
+            { id: '2', title: 'Flappy Clone', description: 'A challenging arcade experience. How far can you fly?', url: 'https://flappybird.io/', thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&h=300&fit=crop', category: 'Arcade', tags: ['retro', 'hard'] },
+            { id: '3', title: 'Hextris', description: 'Fast paced puzzle game inspired by Tetris but on a hexagon.', url: 'https://hextris.io/', thumbnail: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=400&h=300&fit=crop', category: 'Puzzle', tags: ['retro', 'fast'] },
+            { id: '4', title: 'Space Invaders', description: 'Defend Earth from the incoming alien waves!', url: 'https://freeinvaders.org/', thumbnail: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=400&h=300&fit=crop', category: 'Arcade', tags: ['space', 'retro'] }
+        ];
+
+        // 2. CORE LOGIC
+        const state = {
+            currentFilter: 'All',
+            searchQuery: '',
+            favorites: JSON.parse(localStorage.getItem('favs') || '[]'),
+            recent: JSON.parse(localStorage.getItem('recent') || '[]')
+        };
+
+        function init() {
+            renderGrid();
+            renderRecent();
+            setupEventListeners();
+            checkTheme();
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
+            document.getElementById(`page-${pageId}`).classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('game-grid');
+            const filtered = gamesData.filter(g => {
+                const matchesTab = state.currentFilter === 'All' || g.category === state.currentFilter;
+                const matchesSearch = g.title.toLowerCase().includes(state.searchQuery) || g.tags.some(t => t.includes(state.searchQuery));
+                return matchesTab && matchesSearch;
+            });
+
+            grid.innerHTML = filtered.map(game => `
+                <div onclick="openDetails('${game.id}')" class="game-card group cursor-pointer bg-white dark:bg-slate-900 rounded-2xl overflow-hidden border dark:border-slate-800 shadow-sm">
+                    <div class="relative overflow-hidden h-36">
+                        <img src="${game.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+                    </div>
+                    <div class="p-4">
+                        <span class="text-[10px] font-bold text-blue-500 uppercase tracking-tighter">${game.category}</span>
+                        <h3 class="font-bold text-lg truncate">${game.title}</h3>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openDetails(id) {
+            const game = gamesData.find(g => g.id === id);
+            document.getElementById('detail-title').innerText = game.title;
+            document.getElementById('detail-desc').innerText = game.description;
+            document.getElementById('detail-img').src = game.thumbnail;
+            document.getElementById('detail-cat').innerText = game.category;
+            
+            document.getElementById('btn-play').onclick = () => launchGame(game);
+            document.getElementById('btn-fav').onclick = () => toggleFav(game.id);
+            
+            showPage('detail');
+        }
+
+        // 3. TAB CLOAKING & PLAY LOGIC
+        function launchGame(game) {
+            // Save to recent
+            let recent = state.recent.filter(i => i.id !== game.id);
+            recent.unshift(game);
+            state.recent = recent.slice(0, 6);
+            localStorage.setItem('recent', JSON.stringify(state.recent));
+            renderRecent();
+
+            // Cloaking Logic
+            const win = window.open('about:blank', '_blank');
+            if (!win) return alert("Please allow popups to play.");
+
+            win.document.title = "Classroom - Assignments"; // Cloaked Title
+            const link = win.document.createElement('link');
+            link.rel = 'icon';
+            link.href = 'https://ssl.gstatic.com/docs/doclist/images/infinite_drive_2023q4.ico'; // Google Drive icon
+            win.document.head.appendChild(link);
+
+            const iframe = win.document.createElement('iframe');
+            iframe.src = game.url;
+            iframe.style.cssText = "position:fixed; top:0; left:0; bottom:0; right:0; width:100%; height:100%; border:none; margin:0; padding:0; overflow:hidden; z-index:999999;";
+            win.document.body.appendChild(iframe);
+        }
+
+        // 4. HELPERS
+        function renderRecent() {
+            const container = document.getElementById('recent-section');
+            const grid = document.getElementById('recent-grid');
+            if (state.recent.length === 0) return container.classList.add('hidden');
+            
+            container.classList.remove('hidden');
+            grid.innerHTML = state.recent.map(game => `
+                <div onclick="openDetails('${game.id}')" class="flex-shrink-0 w-20 cursor-pointer text-center">
+                    <img src="${game.thumbnail}" class="w-20 h-20 rounded-2xl object-cover ring-2 ring-transparent hover:ring-blue-500 transition-all">
+                    <p class="text-[10px] mt-2 font-medium truncate">${game.title}</p>
+                </div>
+            `).join('');
+        }
+
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                renderGrid();
+            });
+
+            document.getElementById('category-select').addEventListener('change', (e) => {
+                state.currentFilter = e.target.value;
+                renderGrid();
+            });
+
+            document.getElementById('theme-toggle').addEventListener('click', () => {
+                document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            });
+        }
+
+        function checkTheme() {
+            if (localStorage.getItem('theme') === 'light') {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
