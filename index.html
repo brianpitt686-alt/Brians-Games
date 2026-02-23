@@ -349,7 +349,7 @@
             else if(t.includes('mario') || t.includes('vex') || t.includes('gun') || t.includes('krunker') || t.includes('smash') || t.includes('slope') || t.includes('run') || t.includes('tunnel')) cat = 'Action';
             else if(t.includes('mario') || t.includes('retro') || t.includes('classic') || t.includes('wolf')) cat = 'Retro';
             return { ...g, category: cat };
-        }).concat(additionalGames);
+        });
 
         // Safe JSON parsing function to prevent errors on bad localStorage data
         function getSavedJSON(key, defaultVal) {
