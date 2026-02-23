@@ -664,15 +664,7 @@
 
             const targetUrl = g.url || (repoBase + g.folder + "/index.html");
             
-            // Launch in Picture-in-Picture
-            const pip = document.getElementById('pip-window');
-            const iframe = document.getElementById('pip-iframe');
-            document.getElementById('pip-window-title').innerText = g.title;
-            
-            iframe.src = targetUrl;
-            pip.classList.remove('hidden');
-        }
-
+           
         function closePip() {
             document.getElementById('pip-window').classList.add('hidden');
             document.getElementById('pip-iframe').src = '';
