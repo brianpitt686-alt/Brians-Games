@@ -602,21 +602,7 @@
         }, 1000);
 
         setInterval(updateTimeSpent, 5000);
-                // Update tab icon (favicon) to the game's cover art when a game is clicked
-        document.addEventListener('click', (e) => {
-            // This looks for the closest clickable game container
-            const gameContainer = e.target.closest('a, div[onclick], .game-card, .game-item');
-            
-            if (gameContainer) {
-                const coverArtImage = gameContainer.querySelector('img');
-                const favicon = document.getElementById('favicon');
-                
-                // If we found the game's thumbnail and the favicon element, swap the icon!
-                if (coverArtImage && favicon) {
-                    favicon.href = coverArtImage.src;
-                }
-            }
-        });
+              
     </script>
 </body>
 </html>
