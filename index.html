@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Premium Static Games Portal">
-    <title>Nexus v2 | Premium Gaming</title>
+    <title>Nexus Ultimate | Pro Gaming Portal</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -16,17 +15,13 @@
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
                     animation: {
-                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
-                        'glow': 'glow 3s infinite alternate',
+                        'pulse-slow': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
                     },
                     keyframes: {
-                        fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        glow: {
-                            '0%': { boxShadow: '0 0 5px rgba(59, 130, 246, 0.2)' },
-                            '100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)' },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
                         }
                     }
                 }
@@ -35,101 +30,86 @@
     </script>
     
     <style>
-        body { scroll-behavior: smooth; }
+        body { cursor: none; background-color: #020617; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
         
-        /* Glassmorphism */
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* Custom Cursor */
+        #custom-cursor {
+            width: 20px; height: 20px; border: 2px solid #3b82f6; border-radius: 50%;
+            position: fixed; pointer-events: none; z-index: 9999;
+            transition: transform 0.15s ease-out, background 0.3s ease;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
         }
         
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #020617; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        /* Skeleton Pulse */
+        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-        /* Staggered entry for cards */
-        .game-card { opacity: 0; }
-        .reveal { animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-        
-        /* Play Button Pulse */
-        .btn-pulse:hover {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            animation: pulse 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
-        }
-        @keyframes pulse {
-            to { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
-        }
+        /* Hide Scrollbar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-100 font-sans antialiased overflow-x-hidden">
+<body class="text-slate-100 selection:bg-blue-500/30">
 
-    <nav class="fixed top-0 w-full z-[100] glass border-b border-white/5">
+    <canvas id="particleCanvas" class="fixed inset-0 -z-10"></canvas>
+    <div id="custom-cursor"></div>
+
+    <nav class="fixed top-0 w-full z-50 glass border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-2 group cursor-pointer" onclick="showPage('home')">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center rotate-3 group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-                    <span class="text-2xl">🎮</span>
-                </div>
-                <h1 class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">NEXUS<span class="text-blue-500 font-black">V2</span></h1>
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">🎮</div>
+                <h1 class="text-xl font-extrabold tracking-tighter uppercase">Nexus<span class="text-blue-500">Ult</span></h1>
             </div>
-            
+
             <div class="flex items-center gap-6">
-                <div class="hidden md:flex gap-8 text-sm font-medium text-slate-400">
-                    <a href="#" onclick="showPage('home')" class="hover:text-white transition-colors">Library</a>
-                    <a href="#" class="hover:text-white transition-colors">Trending</a>
-                    <a href="#" class="hover:text-white transition-colors">Favorites</a>
+                <div class="hidden md:flex flex-col items-end">
+                    <div class="flex items-center gap-2">
+                        <span id="user-rank" class="text-[10px] font-black text-blue-400 uppercase tracking-widest">NOOB</span>
+                        <span class="text-xs font-bold">Lv. <span id="user-level">1</span></span>
+                    </div>
+                    <div class="w-32 h-1.5 bg-white/10 rounded-full mt-1 overflow-hidden">
+                        <div id="xp-progress" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
                 </div>
-                <button id="theme-toggle" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">🌓</button>
+                <button onclick="toggleTheme()" class="w-10 h-10 rounded-xl hover:bg-white/5 transition-colors">🌓</button>
             </div>
         </div>
     </nav>
 
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-6">
         
-        <section id="page-home" class="page-content">
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-600/10 blur-[120px] -z-10"></div>
-
-            <div class="mb-12">
-                <h2 class="text-4xl md:text-6xl font-black mb-4 tracking-tighter">DISCOVER<br><span class="text-blue-500">EXPERIENCES</span></h2>
-                <div class="flex flex-col md:flex-row gap-4 mt-8">
-                    <input type="text" id="search-input" placeholder="Search the nexus..." 
-                        class="w-full md:w-96 px-6 py-4 rounded-2xl glass border-white/10 focus:border-blue-500/50 outline-none transition-all text-lg">
-                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                        <button onclick="filterCategory('All')" class="cat-btn px-6 py-4 rounded-2xl glass hover:bg-blue-600 transition-all font-bold whitespace-nowrap">All Games</button>
-                        <button onclick="filterCategory('Arcade')" class="cat-btn px-6 py-4 rounded-2xl glass hover:bg-blue-600 transition-all font-bold whitespace-nowrap">Arcade</button>
-                        <button onclick="filterCategory('Puzzle')" class="cat-btn px-6 py-4 rounded-2xl glass hover:bg-blue-600 transition-all font-bold whitespace-nowrap">Puzzle</button>
-                    </div>
+        <section id="page-home">
+            <div class="mb-12 animate-float">
+                <h2 class="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6">
+                    LEVEL UP YOUR<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-500">GAMEPLAY</span>
+                </h2>
+                <div class="flex flex-wrap gap-4">
+                    <input type="text" id="search-bar" placeholder="Find a challenge..." class="px-6 py-4 rounded-2xl glass border-white/10 w-full md:w-80 outline-none focus:border-blue-500/50 transition-all">
+                    <select id="cat-filter" class="px-6 py-4 rounded-2xl glass border-white/10 outline-none cursor-none">
+                        <option value="All">All Categories</option>
+                        <option value="Arcade">Arcade</option>
+                        <option value="Puzzle">Puzzle</option>
+                    </select>
                 </div>
             </div>
 
-            <div id="recent-section" class="mb-16 hidden">
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.3em] mb-6">Jump back in</h3>
-                <div id="recent-grid" class="flex gap-6 overflow-x-auto pb-4 no-scrollbar"></div>
-            </div>
-
-            <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 </div>
         </section>
 
-        <section id="page-detail" class="page-content hidden animate-fade-in-up">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <div class="relative group">
-                    <div class="absolute -inset-4 bg-blue-600/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <img id="detail-img" src="" class="relative w-full aspect-video object-cover rounded-[2rem] shadow-2xl border border-white/10">
+        <section id="page-detail" class="hidden">
+            <div class="flex flex-col lg:flex-row gap-12 items-center">
+                <div class="w-full lg:w-1/2 aspect-video rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl">
+                    <img id="detail-img" src="" class="w-full h-full object-cover">
                 </div>
-                <div>
-                    <span id="detail-cat" class="px-4 py-1.5 rounded-full bg-blue-600/20 text-blue-400 text-xs font-bold tracking-widest uppercase border border-blue-500/20"></span>
-                    <h2 id="detail-title" class="text-6xl font-black mt-6 mb-4 tracking-tighter leading-none"></h2>
-                    <p id="detail-desc" class="text-xl text-slate-400 mb-10 leading-relaxed font-light"></p>
+                <div class="w-full lg:w-1/2">
+                    <span id="detail-cat" class="text-blue-400 font-bold text-xs tracking-widest uppercase"></span>
+                    <h2 id="detail-title" class="text-6xl font-black mt-4 mb-6 tracking-tighter leading-none"></h2>
+                    <p id="detail-desc" class="text-xl text-slate-400 mb-10 leading-relaxed"></p>
                     <div class="flex gap-4">
-                        <button id="btn-play" class="btn-pulse flex-grow md:flex-grow-0 px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-xl transition-all active:scale-95 shadow-[0_10px_40px_rgba(37,99,235,0.3)]">
-                            LAUNCH GAME
-                        </button>
-                        <button onclick="showPage('home')" class="px-8 py-5 glass hover:bg-white/10 rounded-2xl font-bold transition-all">
-                            EXIT
-                        </button>
+                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 rounded-2xl font-black text-xl shadow-xl shadow-blue-600/20 transition-all active:scale-95 cursor-none">LAUNCH GAME</button>
+                        <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold cursor-none">BACK</button>
                     </div>
                 </div>
             </div>
@@ -137,125 +117,152 @@
     </main>
 
     <script>
-        const gamesData = [
-            { id: '1', title: '2048', description: 'Master the tiles in this ultra-smooth version of the classic math puzzle. Merge numbers to reach the ultimate goal.', url: 'https://play2048.co/', thumbnail: 'https://images.unsplash.com/photo-1595303526913-c7037797ebe7?w=800&q=80', category: 'Puzzle' },
-            { id: '2', title: 'Retro Bird', description: 'A high-fidelity flappy experience. Navigate through the pipes with precision and style in this neon-lit clone.', url: 'https://flappybird.io/', thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80', category: 'Arcade' },
-            { id: '3', title: 'Hextris', description: 'A fast-paced hexagonal puzzle game that challenges your reflexes and spatial awareness.', url: 'https://hextris.io/', thumbnail: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=800&q=80', category: 'Puzzle' },
-            { id: '4', title: 'Star Defender', description: 'The retro space shooter reborn. Defend the nexus from relentless waves of pixelated alien invaders.', url: 'https://freeinvaders.org/', thumbnail: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=800&q=80', category: 'Arcade' },
-            { id: '5', title: 'Tetris Web', description: 'The most popular block-stacking game in history. Simple, addictive, and eternal.', url: 'https://tetris.com/play-tetris', thumbnail: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&q=80', category: 'Puzzle' }
+        // --- DATA & STATE ---
+        const games = [
+            { id: '1', title: '2048', category: 'Puzzle', desc: 'Merge tiles to reach 2048.', url: 'https://play2048.co/', thumb: 'https://images.unsplash.com/photo-1595303526913-c7037797ebe7?w=500' },
+            { id: '2', title: 'Retro Bird', category: 'Arcade', desc: 'Flap through the obstacles.', url: 'https://flappybird.io/', thumb: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=500' },
+            { id: '3', title: 'Hextris', category: 'Puzzle', desc: 'Fast-paced hex puzzle action.', url: 'https://hextris.io/', thumb: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=500' },
+            { id: '4', title: 'Invaders', category: 'Arcade', desc: 'Classic space shooter defense.', url: 'https://freeinvaders.org/', thumb: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=500' }
         ];
 
         let state = {
-            category: 'All',
+            xp: parseInt(localStorage.getItem('nx_xp')) || 0,
+            lvl: parseInt(localStorage.getItem('nx_lvl')) || 1,
             search: '',
-            recent: JSON.parse(localStorage.getItem('nexus-recent') || '[]')
+            cat: 'All'
         };
 
+        // --- CORE FUNCTIONS ---
         function init() {
-            renderGrid();
-            renderRecent();
-            
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                state.search = e.target.value.toLowerCase();
-                renderGrid();
-            });
-
-            // Theme toggle stub (already dark by default for "better UI")
-            document.getElementById('theme-toggle').onclick = () => {
-                document.documentElement.classList.toggle('light');
-                document.documentElement.classList.toggle('dark');
-            };
+            renderSkeletons();
+            setTimeout(renderGrid, 800); // Visual delay for skeleton load
+            updateUIStats();
+            initParticles();
+            setupCursor();
+            setupPanicKey();
         }
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            if(pageId === 'home') renderGrid();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function renderSkeletons() {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = Array(4).fill(0).map(() => `
+                <div class="h-64 rounded-[2rem] skeleton opacity-50"></div>
+            `).join('');
         }
 
         function renderGrid() {
             const grid = document.getElementById('game-grid');
-            const filtered = gamesData.filter(g => {
-                const matchesCat = state.category === 'All' || g.category === state.category;
-                const matchesSearch = g.title.toLowerCase().includes(state.search);
-                return matchesCat && matchesSearch;
-            });
+            const filtered = games.filter(g => 
+                (state.cat === 'All' || g.category === state.cat) &&
+                g.title.toLowerCase().includes(state.search.toLowerCase())
+            );
 
-            grid.innerHTML = filtered.map((game, index) => `
-                <div onclick="openDetails('${game.id}')" 
-                     class="game-card group cursor-pointer glass rounded-[2rem] overflow-hidden border border-white/5 hover:border-blue-500/50 transition-all duration-500 reveal"
-                     style="animation-delay: ${index * 100}ms">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="${game.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-6">
-                             <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${game.category}</span>
-                             <h3 class="text-2xl font-bold text-white tracking-tighter">${game.title}</h3>
-                        </div>
+            grid.innerHTML = filtered.map(g => `
+                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border-white/5 hover:border-blue-500/50 transition-all duration-500 cursor-none">
+                    <img src="${g.thumb}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent"></div>
+                    <div class="absolute bottom-6 left-6">
+                        <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${g.category}</span>
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
                     </div>
                 </div>
             `).join('');
         }
 
-        function filterCategory(cat) {
-            state.category = cat;
-            renderGrid();
-        }
-
-        function openDetails(id) {
-            const game = gamesData.find(g => g.id === id);
-            document.getElementById('detail-title').innerText = game.title;
-            document.getElementById('detail-desc').innerText = game.description;
-            document.getElementById('detail-img').src = game.thumbnail;
-            document.getElementById('detail-cat').innerText = game.category;
-            
-            document.getElementById('btn-play').onclick = () => {
-                addToRecent(game);
-                launchCloaked(game.url);
-            };
-            
+        function openDetail(id) {
+            const g = games.find(i => i.id === id);
+            document.getElementById('detail-title').innerText = g.title;
+            document.getElementById('detail-desc').innerText = g.desc;
+            document.getElementById('detail-img').src = g.thumb;
+            document.getElementById('detail-cat').innerText = g.category;
+            document.getElementById('play-btn').onclick = () => launchGame(g);
             showPage('detail');
         }
 
-        function launchCloaked(url) {
+        function launchGame(g) {
+            // XP Gain
+            state.xp += 25;
+            if (state.xp >= 100) { state.xp = 0; state.lvl++; }
+            localStorage.setItem('nx_xp', state.xp);
+            localStorage.setItem('nx_lvl', state.lvl);
+            updateUIStats();
+
+            // Stealth Launch
             const win = window.open('about:blank', '_blank');
-            if (!win) return alert("Pop-ups blocked!");
-
-            win.document.title = "Google"; 
-            const link = win.document.createElement('link');
-            link.rel = 'icon';
-            link.href = 'https://www.google.com/favicon.ico';
-            win.document.head.appendChild(link);
-
+            win.document.title = "Google Docs";
             const iframe = win.document.createElement('iframe');
-            iframe.src = url;
-            iframe.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;border:none;margin:0;padding:0;";
+            iframe.src = g.url;
+            iframe.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;border:none;";
             win.document.body.appendChild(iframe);
         }
 
-        function addToRecent(game) {
-            let recent = state.recent.filter(i => i.id !== game.id);
-            recent.unshift(game);
-            state.recent = recent.slice(0, 5);
-            localStorage.setItem('nexus-recent', JSON.stringify(state.recent));
-            renderRecent();
+        // --- UX ENHANCEMENTS ---
+        function updateUIStats() {
+            document.getElementById('user-level').innerText = state.lvl;
+            document.getElementById('xp-progress').style.width = state.xp + '%';
+            
+            const ranks = ["Noob", "Apprentice", "Elite", "Pro", "Legend", "Nexus God"];
+            const rankIdx = Math.min(Math.floor(state.lvl / 3), ranks.length - 1);
+            document.getElementById('user-rank').innerText = ranks[rankIdx];
         }
 
-        function renderRecent() {
-            const container = document.getElementById('recent-section');
-            const grid = document.getElementById('recent-grid');
-            if (state.recent.length === 0) return;
-            
-            container.classList.remove('hidden');
-            grid.innerHTML = state.recent.map(game => `
-                <div onclick="openDetails('${game.id}')" class="flex-shrink-0 group cursor-pointer">
-                    <div class="w-16 h-16 rounded-2xl glass p-1 border border-white/10 group-hover:border-blue-500 transition-all">
-                        <img src="${game.thumbnail}" class="w-full h-full object-cover rounded-xl">
-                    </div>
-                </div>
-            `).join('');
+        function setupCursor() {
+            const cursor = document.getElementById('custom-cursor');
+            window.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+            // Interactive scaling on hover
+            document.addEventListener('mouseover', (e) => {
+                if (e.target.tagName === 'BUTTON' || e.target.closest('[onclick]')) {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(2.5)';
+                    cursor.style.background = 'rgba(59, 130, 246, 0.1)';
+                } else {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                    cursor.style.background = 'transparent';
+                }
+            });
         }
+
+        function setupPanicKey() {
+            window.addEventListener('keydown', (e) => {
+                if (e.key === '`') window.location.href = 'https://google.com';
+            });
+        }
+
+        function showPage(p) {
+            document.getElementById('page-home').classList.toggle('hidden', p !== 'home');
+            document.getElementById('page-detail').classList.toggle('hidden', p !== 'detail');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- BACKGROUND PARTICLES ---
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let pts = [];
+            
+            const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+            window.onresize = resize; resize();
+
+            for(let i=0; i<60; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.5, vy: (Math.random()-0.5)*0.5 });
+
+            function draw() {
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = "rgba(59, 130, 246, 0.15)";
+                pts.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if(p.x<0 || p.x>canvas.width) p.vx *= -1;
+                    if(p.y<0 || p.y>canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        // Event Listeners
+        document.getElementById('search-bar').oninput = (e) => { state.search = e.target.value; renderGrid(); };
+        document.getElementById('cat-filter').onchange = (e) => { state.cat = e.target.value; renderGrid(); };
 
         init();
     </script>
