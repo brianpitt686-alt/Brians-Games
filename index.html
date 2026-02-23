@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Premium Static Games Portal">
-    <title>Nexus v2 | Premium Gaming</title>
+    <title>Nexus Apex | Elite Portal</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
     <script>
         tailwind.config = {
@@ -15,121 +14,141 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
-                    animation: {
-                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
-                        'glow': 'glow 3s infinite alternate',
-                    },
-                    keyframes: {
-                        fadeInUp: {
-                            '0%': { opacity: '0', transform: 'translateY(20px)' },
-                            '100%': { opacity: '1', transform: 'translateY(0)' },
-                        },
-                        glow: {
-                            '0%': { boxShadow: '0 0 5px rgba(59, 130, 246, 0.2)' },
-                            '100%': { boxShadow: '0 0 20px rgba(59, 130, 246, 0.6)' },
-                        }
-                    }
                 }
             }
         }
     </script>
     
     <style>
-        body { scroll-behavior: smooth; }
-        
-        /* Glassmorphism */
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #020617; }
-        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        :root { --cursor-color: #3b82f6; }
+        body { cursor: none; transition: background-color 0.5s ease; scroll-behavior: smooth; }
+        .dark body { background-color: #020617; color: #f8fafc; }
+        .light body { background-color: #f1f5f9; color: #0f172a; }
 
-        /* Staggered entry for cards */
-        .game-card { opacity: 0; }
-        .reveal { animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-        
-        /* Play Button Pulse */
-        .btn-pulse:hover {
-            box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-            animation: pulse 1.5s infinite cubic-bezier(0.66, 0, 0, 1);
+        /* Loader */
+        #loader {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #020617; transition: opacity 0.8s ease;
         }
-        @keyframes pulse {
-            to { box-shadow: 0 0 0 20px rgba(59, 130, 246, 0); }
+
+        /* Custom Cursor */
+        #custom-cursor {
+            width: 20px; height: 20px; border: 2px solid var(--cursor-color); border-radius: 50%;
+            position: fixed; pointer-events: none; z-index: 10000;
+            transition: transform 0.15s ease-out, background 0.3s ease;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
         }
+
+        /* Dashboard Slide */
+        #stats-dashboard {
+            transform: translateX(100%);
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        #stats-dashboard.active { transform: translateX(0); }
+
+        /* Glassmorphism */
+        .glass { backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .dark .glass { background: rgba(15, 23, 42, 0.7); }
+        .light .glass { background: rgba(255, 255, 255, 0.8); border-color: rgba(0, 0, 0, 0.05); }
+
+        /* Skeleton Pulse */
+        .skeleton { background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body class="bg-[#020617] text-slate-100 font-sans antialiased overflow-x-hidden">
+<body class="selection:bg-blue-500/30 overflow-x-hidden">
 
-    <nav class="fixed top-0 w-full z-[100] glass border-b border-white/5">
+    <div id="loader">
+        <div class="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <h1 class="text-white font-black tracking-widest text-xl animate-pulse uppercase">Nexus Elite</h1>
+    </div>
+
+    <canvas id="particleCanvas" class="fixed inset-0 -z-10"></canvas>
+    <div id="custom-cursor"></div>
+
+    <nav class="fixed top-0 w-full z-50 glass border-b">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center gap-2 group cursor-pointer" onclick="showPage('home')">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center rotate-3 group-hover:rotate-12 transition-transform duration-300 shadow-[0_0_20px_rgba(37,99,235,0.4)]">
-                    <span class="text-2xl">🎮</span>
-                </div>
-                <h1 class="text-xl font-extrabold tracking-tighter bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">NEXUS<span class="text-blue-500 font-black">V2</span></h1>
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">🎮</div>
+                <h1 class="text-xl font-extrabold tracking-tighter uppercase">Nexus<span class="text-blue-500">Apex</span></h1>
             </div>
-            
+
             <div class="flex items-center gap-6">
-                <div class="hidden md:flex gap-8 text-sm font-medium text-slate-400">
-                    <a href="#" onclick="showPage('home')" class="hover:text-white transition-colors">Library</a>
-                    <a href="#" class="hover:text-white transition-colors">Trending</a>
-                    <a href="#" class="hover:text-white transition-colors">Favorites</a>
-                </div>
-                <button id="theme-toggle" class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors">🌓</button>
+                <button onclick="toggleDashboard()" class="flex flex-col items-end group">
+                    <div class="flex items-center gap-2">
+                        <span id="user-rank" class="text-[10px] font-black text-blue-500 uppercase tracking-widest group-hover:text-blue-400 transition-colors">NOOB</span>
+                        <span class="text-xs font-bold">Lv. <span id="user-level">1</span></span>
+                    </div>
+                    <div class="w-32 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
+                        <div id="xp-progress" class="h-full bg-blue-500 transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </button>
+                <button onclick="toggleTheme()" id="theme-btn" class="w-10 h-10 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors text-xl">🌙</button>
             </div>
         </div>
     </nav>
 
+    <div id="stats-dashboard" class="fixed top-0 right-0 h-full w-full md:w-[450px] z-[60] glass border-l p-10 flex flex-col">
+        <div class="flex justify-between items-center mb-10">
+            <h2 class="text-3xl font-black tracking-tighter">ELITE <span class="text-blue-500">STATS</span></h2>
+            <button onclick="toggleDashboard()" class="text-sm font-bold opacity-50 hover:opacity-100">CLOSE</button>
+        </div>
+
+        <div class="space-y-8 overflow-y-auto no-scrollbar pb-10">
+            <div class="p-6 rounded-3xl bg-blue-600/10 border border-blue-500/20">
+                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Total Time Spent</p>
+                <p id="total-time-global" class="text-4xl font-black">0h 0m</p>
+            </div>
+
+            <div>
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Game History</h3>
+                <div id="game-stats-list" class="space-y-4">
+                    </div>
+            </div>
+        </div>
+    </div>
+
     <main class="pt-32 pb-20 max-w-7xl mx-auto px-6">
         
-        <section id="page-home" class="page-content">
-            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-blue-600/10 blur-[120px] -z-10"></div>
-
+        <section id="page-home">
             <div class="mb-12">
-                <h2 class="text-4xl md:text-6xl font-black mb-4 tracking-tighter">DISCOVER<br><span class="text-blue-500">EXPERIENCES</span></h2>
-                <div class="flex flex-col md:flex-row gap-4 mt-8">
-                    <input type="text" id="search-input" placeholder="Search the nexus..." 
-                        class="w-full md:w-96 px-6 py-4 rounded-2xl glass border-white/10 focus:border-blue-500/50 outline-none transition-all text-lg">
-                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2">
-                        <button onclick="filterCategory('All')" class="cat-btn px-6 py-4 rounded-2xl glass hover:bg-blue-600 transition-all font-bold whitespace-nowrap">All Games</button>
-                        <button onclick="filterCategory('Arcade')" class="cat-btn px-6 py-4 rounded-2xl glass hover:bg-blue-600 transition-all font-bold whitespace-nowrap">Arcade</button>
-                        <button onclick="filterCategory('Puzzle')" class="cat-btn px-6 py-4 rounded-2xl glass hover:bg-blue-600 transition-all font-bold whitespace-nowrap">Puzzle</button>
-                    </div>
+                <h2 class="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-6">
+                    READY FOR<br><span class="text-blue-500">NEXT LEVEL?</span>
+                </h2>
+                <div class="flex flex-wrap gap-4">
+                    <input type="text" id="search-bar" placeholder="Search games..." class="px-6 py-4 rounded-2xl glass w-full md:w-80 outline-none focus:ring-2 focus:ring-blue-500 transition-all">
+                    <select id="cat-filter" class="px-6 py-4 rounded-2xl glass outline-none">
+                        <option value="All">All Categories</option>
+                        <option value="Arcade">Arcade</option>
+                        <option value="Puzzle">Puzzle</option>
+                    </select>
                 </div>
             </div>
 
-            <div id="recent-section" class="mb-16 hidden">
-                <h3 class="text-xs font-bold text-slate-500 uppercase tracking-[0.3em] mb-6">Jump back in</h3>
-                <div id="recent-grid" class="flex gap-6 overflow-x-auto pb-4 no-scrollbar"></div>
-            </div>
-
-            <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 </div>
         </section>
 
-        <section id="page-detail" class="page-content hidden animate-fade-in-up">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <div class="relative group">
-                    <div class="absolute -inset-4 bg-blue-600/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <img id="detail-img" src="" class="relative w-full aspect-video object-cover rounded-[2rem] shadow-2xl border border-white/10">
+        <section id="page-detail" class="hidden">
+            <div class="flex flex-col lg:flex-row gap-12 items-center">
+                <div class="w-full lg:w-1/2 aspect-video rounded-[2rem] overflow-hidden border shadow-2xl">
+                    <img id="detail-img" src="" class="w-full h-full object-cover">
                 </div>
-                <div>
-                    <span id="detail-cat" class="px-4 py-1.5 rounded-full bg-blue-600/20 text-blue-400 text-xs font-bold tracking-widest uppercase border border-blue-500/20"></span>
-                    <h2 id="detail-title" class="text-6xl font-black mt-6 mb-4 tracking-tighter leading-none"></h2>
-                    <p id="detail-desc" class="text-xl text-slate-400 mb-10 leading-relaxed font-light"></p>
+                <div class="w-full lg:w-1/2">
+                    <span id="detail-cat" class="text-blue-500 font-bold text-xs tracking-widest uppercase"></span>
+                    <h2 id="detail-title" class="text-6xl font-black mt-4 mb-2 tracking-tighter"></h2>
+                    
+                    <div class="flex gap-4 mb-6 text-sm font-bold opacity-60">
+                        <p>Playtime: <span id="detail-time" class="text-blue-500">0m</span></p>
+                        <p>Launches: <span id="detail-launches" class="text-blue-500">0</span></p>
+                    </div>
+
+                    <p id="detail-desc" class="text-xl opacity-70 mb-10 leading-relaxed"></p>
                     <div class="flex gap-4">
-                        <button id="btn-play" class="btn-pulse flex-grow md:flex-grow-0 px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-extrabold text-xl transition-all active:scale-95 shadow-[0_10px_40px_rgba(37,99,235,0.3)]">
-                            LAUNCH GAME
-                        </button>
-                        <button onclick="showPage('home')" class="px-8 py-5 glass hover:bg-white/10 rounded-2xl font-bold transition-all">
-                            EXIT
-                        </button>
+                        <button id="play-btn" class="px-10 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-xl transition-all active:scale-95 shadow-xl shadow-blue-600/30">PLAY NOW</button>
+                        <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold">BACK</button>
                     </div>
                 </div>
             </div>
@@ -137,125 +156,234 @@
     </main>
 
     <script>
-        const gamesData = [
-            { id: '1', title: '2048', description: 'Master the tiles in this ultra-smooth version of the classic math puzzle. Merge numbers to reach the ultimate goal.', url: 'https://play2048.co/', thumbnail: 'https://images.unsplash.com/photo-1595303526913-c7037797ebe7?w=800&q=80', category: 'Puzzle' },
-            { id: '2', title: 'Retro Bird', description: 'A high-fidelity flappy experience. Navigate through the pipes with precision and style in this neon-lit clone.', url: 'https://flappybird.io/', thumbnail: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80', category: 'Arcade' },
-            { id: '3', title: 'Hextris', description: 'A fast-paced hexagonal puzzle game that challenges your reflexes and spatial awareness.', url: 'https://hextris.io/', thumbnail: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=800&q=80', category: 'Puzzle' },
-            { id: '4', title: 'Star Defender', description: 'The retro space shooter reborn. Defend the nexus from relentless waves of pixelated alien invaders.', url: 'https://freeinvaders.org/', thumbnail: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=800&q=80', category: 'Arcade' },
-            { id: '5', title: 'Tetris Web', description: 'The most popular block-stacking game in history. Simple, addictive, and eternal.', url: 'https://tetris.com/play-tetris', thumbnail: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800&q=80', category: 'Puzzle' }
+        const games = [
+            { id: '1', title: '2048', category: 'Puzzle', desc: 'Merge the tiles and get to 2048!', url: 'https://play2048.co/', thumb: 'https://images.unsplash.com/photo-1595303526913-c7037797ebe7?w=600' },
+            { id: '2', title: 'Retro Bird', category: 'Arcade', desc: 'The ultimate test of frustration and skill.', url: 'https://flappybird.io/', thumb: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=600' },
+            { id: '3', title: 'Hextris', category: 'Puzzle', desc: 'Fast-paced hexagonal block stacking.', url: 'https://hextris.io/', thumb: 'https://images.unsplash.com/photo-1614332287897-cdc485fa562d?w=600' },
+            { id: '4', title: 'Star Shooter', category: 'Arcade', desc: 'Defend the galaxy from pixelated aliens.', url: 'https://freeinvaders.org/', thumb: 'https://images.unsplash.com/photo-1612036782180-6f0b6cd846fe?w=600' }
         ];
 
         let state = {
-            category: 'All',
-            search: '',
-            recent: JSON.parse(localStorage.getItem('nexus-recent') || '[]')
+            xp: parseInt(localStorage.getItem('nx_xp')) || 0,
+            lvl: parseInt(localStorage.getItem('nx_lvl')) || 1,
+            theme: localStorage.getItem('nx_theme') || 'dark',
+            stats: JSON.parse(localStorage.getItem('nx_stats')) || {},
+            activeGameId: null,
+            startTime: null
         };
 
         function init() {
-            renderGrid();
-            renderRecent();
+            applyTheme();
+            renderSkeletons();
             
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                state.search = e.target.value.toLowerCase();
-                renderGrid();
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    document.getElementById('loader').style.opacity = '0';
+                    setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
+                    renderGrid();
+                }, 1200);
             });
 
-            // Theme toggle stub (already dark by default for "better UI")
-            document.getElementById('theme-toggle').onclick = () => {
-                document.documentElement.classList.toggle('light');
-                document.documentElement.classList.toggle('dark');
-            };
+            updateUIStats();
+            initParticles();
+            setupCursor();
+            
+            // Stealth Panic Key (`)
+            window.addEventListener('keydown', (e) => { if (e.key === '`') window.location.href = 'https://google.com'; });
+
+            // Tracking Interval: Save time every 10 seconds
+            setInterval(updateTimeSpent, 10000);
         }
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
-            document.getElementById(`page-${pageId}`).classList.remove('hidden');
-            if(pageId === 'home') renderGrid();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+        function renderSkeletons() {
+            const grid = document.getElementById('game-grid');
+            grid.innerHTML = Array(4).fill(0).map(() => `<div class="h-64 rounded-[2rem] skeleton opacity-30"></div>`).join('');
         }
 
         function renderGrid() {
             const grid = document.getElementById('game-grid');
-            const filtered = gamesData.filter(g => {
-                const matchesCat = state.category === 'All' || g.category === state.category;
-                const matchesSearch = g.title.toLowerCase().includes(state.search);
-                return matchesCat && matchesSearch;
-            });
+            const search = document.getElementById('search-bar').value.toLowerCase();
+            const cat = document.getElementById('cat-filter').value;
 
-            grid.innerHTML = filtered.map((game, index) => `
-                <div onclick="openDetails('${game.id}')" 
-                     class="game-card group cursor-pointer glass rounded-[2rem] overflow-hidden border border-white/5 hover:border-blue-500/50 transition-all duration-500 reveal"
-                     style="animation-delay: ${index * 100}ms">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="${game.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent opacity-80"></div>
-                        <div class="absolute bottom-4 left-6">
-                             <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${game.category}</span>
-                             <h3 class="text-2xl font-bold text-white tracking-tighter">${game.title}</h3>
-                        </div>
+            const filtered = games.filter(g => 
+                (cat === 'All' || g.category === cat) &&
+                g.title.toLowerCase().includes(search)
+            );
+
+            grid.innerHTML = filtered.map(g => `
+                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-blue-500/50 transition-all duration-500">
+                    <img src="${g.thumb}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                    <div class="absolute bottom-6 left-6 text-white">
+                        <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">${g.category}</span>
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
                     </div>
                 </div>
             `).join('');
         }
 
-        function filterCategory(cat) {
-            state.category = cat;
-            renderGrid();
-        }
+        function openDetail(id) {
+            const g = games.find(i => i.id === id);
+            const gStats = state.stats[id] || { time: 0, launches: 0 };
 
-        function openDetails(id) {
-            const game = gamesData.find(g => g.id === id);
-            document.getElementById('detail-title').innerText = game.title;
-            document.getElementById('detail-desc').innerText = game.description;
-            document.getElementById('detail-img').src = game.thumbnail;
-            document.getElementById('detail-cat').innerText = game.category;
+            document.getElementById('detail-title').innerText = g.title;
+            document.getElementById('detail-desc').innerText = g.desc;
+            document.getElementById('detail-img').src = g.thumb;
+            document.getElementById('detail-cat').innerText = g.category;
+            document.getElementById('detail-time').innerText = formatTime(gStats.time);
+            document.getElementById('detail-launches').innerText = gStats.launches;
             
-            document.getElementById('btn-play').onclick = () => {
-                addToRecent(game);
-                launchCloaked(game.url);
-            };
-            
+            document.getElementById('play-btn').onclick = () => launchGame(g);
             showPage('detail');
         }
 
-        function launchCloaked(url) {
+        function launchGame(g) {
+            if (!state.stats[g.id]) state.stats[g.id] = { time: 0, launches: 0 };
+            state.stats[g.id].launches++;
+            
+            state.activeGameId = g.id;
+            state.startTime = Date.now();
+            
+            state.xp += 20;
+            if (state.xp >= 100) { state.xp = 0; state.lvl++; }
+            saveState();
+            updateUIStats();
+
             const win = window.open('about:blank', '_blank');
-            if (!win) return alert("Pop-ups blocked!");
-
-            win.document.title = "Google"; 
-            const link = win.document.createElement('link');
-            link.rel = 'icon';
-            link.href = 'https://www.google.com/favicon.ico';
-            win.document.head.appendChild(link);
-
+            win.document.title = "Google Docs";
             const iframe = win.document.createElement('iframe');
-            iframe.src = url;
-            iframe.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;border:none;margin:0;padding:0;";
+            iframe.src = g.url;
+            iframe.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;border:none;";
             win.document.body.appendChild(iframe);
         }
 
-        function addToRecent(game) {
-            let recent = state.recent.filter(i => i.id !== game.id);
-            recent.unshift(game);
-            state.recent = recent.slice(0, 5);
-            localStorage.setItem('nexus-recent', JSON.stringify(state.recent));
-            renderRecent();
+        function updateTimeSpent() {
+            if (state.activeGameId && state.startTime) {
+                const now = Date.now();
+                const secondsPassed = Math.floor((now - state.startTime) / 1000);
+                state.stats[state.activeGameId].time += secondsPassed;
+                state.startTime = now;
+                saveState();
+                updateDashboard();
+            }
         }
 
-        function renderRecent() {
-            const container = document.getElementById('recent-section');
-            const grid = document.getElementById('recent-grid');
-            if (state.recent.length === 0) return;
-            
-            container.classList.remove('hidden');
-            grid.innerHTML = state.recent.map(game => `
-                <div onclick="openDetails('${game.id}')" class="flex-shrink-0 group cursor-pointer">
-                    <div class="w-16 h-16 rounded-2xl glass p-1 border border-white/10 group-hover:border-blue-500 transition-all">
-                        <img src="${game.thumbnail}" class="w-full h-full object-cover rounded-xl">
-                    </div>
-                </div>
-            `).join('');
+        function toggleDashboard() {
+            const db = document.getElementById('stats-dashboard');
+            db.classList.toggle('active');
+            if(db.classList.contains('active')) updateDashboard();
         }
+
+        function updateDashboard() {
+            let totalSecs = 0;
+            const list = document.getElementById('game-stats-list');
+            list.innerHTML = '';
+
+            games.forEach(g => {
+                const s = state.stats[g.id] || { time: 0, launches: 0 };
+                totalSecs += s.time;
+                if(s.launches > 0) {
+                    list.innerHTML += `
+                        <div class="flex items-center justify-between p-4 rounded-2xl glass">
+                            <div class="flex items-center gap-3">
+                                <img src="${g.thumb}" class="w-10 h-10 rounded-lg object-cover">
+                                <div>
+                                    <p class="font-bold text-sm leading-tight">${g.title}</p>
+                                    <p class="text-[10px] opacity-50 uppercase font-black tracking-widest">${g.category}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xs font-black text-blue-500">${formatTime(s.time)}</p>
+                                <p class="text-[10px] opacity-50">${s.launches} Plays</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+
+            document.getElementById('total-time-global').innerText = formatTime(totalSecs);
+            if(list.innerHTML === '') list.innerHTML = '<p class="text-sm opacity-50">No data found. Play a game to start tracking!</p>';
+        }
+
+        function formatTime(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            return h > 0 ? `${h}h ${m}m` : `${m}m`;
+        }
+
+        function toggleTheme() {
+            state.theme = state.theme === 'dark' ? 'light' : 'dark';
+            applyTheme();
+            saveState();
+        }
+
+        function applyTheme() {
+            const html = document.documentElement;
+            const btn = document.getElementById('theme-btn');
+            if (state.theme === 'dark') { html.classList.add('dark'); btn.innerText = '🌙'; }
+            else { html.classList.remove('dark'); btn.innerText = '☀️'; }
+        }
+
+        function updateUIStats() {
+            document.getElementById('user-level').innerText = state.lvl;
+            document.getElementById('xp-progress').style.width = state.xp + '%';
+            const ranks = ["Noob", "Rookie", "Elite", "Master", "Pro", "Legend", "Apex"];
+            document.getElementById('user-rank').innerText = ranks[Math.min(Math.floor(state.lvl / 2), 6)];
+        }
+
+        function saveState() {
+            localStorage.setItem('nx_xp', state.xp);
+            localStorage.setItem('nx_lvl', state.lvl);
+            localStorage.setItem('nx_theme', state.theme);
+            localStorage.setItem('nx_stats', JSON.stringify(state.stats));
+        }
+
+        function showPage(p) {
+            document.getElementById('page-home').classList.toggle('hidden', p !== 'home');
+            document.getElementById('page-detail').classList.toggle('hidden', p !== 'detail');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function setupCursor() {
+            const cursor = document.getElementById('custom-cursor');
+            window.addEventListener('mousemove', (e) => {
+                cursor.style.left = e.clientX + 'px';
+                cursor.style.top = e.clientY + 'px';
+            });
+            document.addEventListener('mouseover', (e) => {
+                const interactive = e.target.tagName === 'BUTTON' || e.target.closest('button') || e.target.closest('[onclick]') || e.target.tagName === 'INPUT';
+                if (interactive) {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(2.8)';
+                    cursor.style.background = 'rgba(59, 130, 246, 0.1)';
+                } else {
+                    cursor.style.transform = 'translate(-50%, -50%) scale(1)';
+                    cursor.style.background = 'transparent';
+                }
+            });
+        }
+
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let pts = [];
+            const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+            window.onresize = resize; resize();
+            for(let i=0; i<40; i++) pts.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx: (Math.random()-0.5)*0.4, vy: (Math.random()-0.5)*0.4 });
+            function draw() {
+                ctx.clearRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = state.theme === 'dark' ? "rgba(59, 130, 246, 0.15)" : "rgba(59, 130, 246, 0.08)";
+                pts.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if(p.x<0 || p.x>canvas.width) p.vx *= -1; if(p.y<0 || p.y>canvas.height) p.vy *= -1;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+
+        document.getElementById('search-bar').oninput = renderGrid;
+        document.getElementById('cat-filter').onchange = renderGrid;
 
         init();
     </script>
