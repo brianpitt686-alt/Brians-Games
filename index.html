@@ -46,6 +46,12 @@
 </head>
 <body class="selection:bg-accent/30">
 
+    <!-- Background Music Audio Element -->
+    <!-- Added autoplay attribute to try starting immediately -->
+    <audio id="bgm" loop preload="auto" autoplay>
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+    </audio>
+
     <!-- Loading Screen -->
     <div id="loader">
         <div class="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -68,6 +74,7 @@
                     <div id="xp-progress" class="h-full bg-accent transition-all duration-500" style="width: 0%"></div>
                 </div>
             </button>
+            <button onclick="toggleMusic()" id="music-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Background Music">🔊</button>
             <button onclick="toggleCloak()" id="cloak-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Clever Cloak">🥸</button>
             <button onclick="toggleSettings()" class="text-xl hover:scale-110 transition-transform" title="Settings">⚙️</button>
             <button onclick="toggleTheme()" id="theme-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Light/Dark">🌙</button>
@@ -122,7 +129,7 @@
                 </div>
                 <div>
                     <label class="text-xs font-bold uppercase opacity-60">Cover Image URL (Optional)</label>
-                    <input type="text" id="cg-img" class="w-full mt-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent glass text-white placeholder-white/30">
+                    <input type="text" id="cg-img" class="w-full mt-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent glass text-white placeholder-white/30" placeholder="https://example.com/image.jpg">
                 </div>
                 <button onclick="saveCustomGame()" class="w-full py-4 mt-4 bg-accent hover:opacity-80 text-white rounded-xl font-black text-lg transition-all shadow-xl">ADD TO LIBRARY</button>
             </div>
@@ -255,13 +262,25 @@
             { id: '108', title: 'You Are Bezos', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/you-are-bezos/index.html', cover: 'https://1kh0.github.io/projects/you-are-bezos/thumb.png' },
         ];
 
+        // Safe JSON parsing function to prevent errors on bad localStorage data
+        function getSavedJSON(key, defaultVal) {
+            try {
+                const data = localStorage.getItem(key);
+                return data ? JSON.parse(data) : defaultVal;
+            } catch (e) {
+                return defaultVal;
+            }
+        }
+
         let state = {
             theme: localStorage.getItem('nx_theme') || 'dark',
             color: localStorage.getItem('nx_color') || '59, 130, 246',
-            stats: JSON.parse(localStorage.getItem('nx_stats')) || {},
-            favorites: JSON.parse(localStorage.getItem('nx_favorites')) || [],
-            customGames: JSON.parse(localStorage.getItem('nx_custom_games')) || [],
-            hiddenGames: JSON.parse(localStorage.getItem('nx_hidden_games')) || [],
+            // Default to true (ON) unless specifically saved as false
+            musicOn: localStorage.getItem('nx_music') !== 'false', 
+            stats: getSavedJSON('nx_stats', {}),
+            favorites: getSavedJSON('nx_favorites', []),
+            customGames: getSavedJSON('nx_custom_games', []),
+            hiddenGames: getSavedJSON('nx_hidden_games', []),
             activeGameId: null,
             startTime: null
         };
@@ -270,10 +289,31 @@
             localStorage.setItem('nx_stats', JSON.stringify(state.stats));
             localStorage.setItem('nx_theme', state.theme);
             localStorage.setItem('nx_color', state.color);
+            localStorage.setItem('nx_music', state.musicOn);
             localStorage.setItem('nx_favorites', JSON.stringify(state.favorites));
             localStorage.setItem('nx_custom_games', JSON.stringify(state.customGames));
             localStorage.setItem('nx_hidden_games', JSON.stringify(state.hiddenGames));
             updateRankUI();
+        }
+
+        // --- MUSIC PLAYER ---
+        const bgm = document.getElementById('bgm');
+        bgm.volume = 0.4; // Soft background volume
+
+        function toggleMusic() {
+            state.musicOn = !state.musicOn;
+            updateMusicUI();
+            save();
+            
+            if (state.musicOn) {
+                bgm.play().catch(e => console.log("Waiting for user interaction to play audio."));
+            } else {
+                bgm.pause();
+            }
+        }
+
+        function updateMusicUI() {
+            document.getElementById('music-btn').innerText = state.musicOn ? "🔊" : "🔈";
         }
 
         function launchGame(g) {
@@ -360,7 +400,7 @@
             grid.innerHTML = allGames.map(g => {
                 const isFav = state.favorites.includes(g.id);
                 return `
-                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-accent/50 transition-all duration-300 cursor-pointer">
+                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-accent/50 transition-all duration-300 cursor-pointer bg-black/20">
                     <img src="${g.cover}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/0f172a/cccccc?text=${encodeURIComponent(g.title)}&font=Montserrat'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60">
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                     
@@ -374,8 +414,8 @@
                         ${isFav ? '★' : '☆'}
                     </button>
 
-                    <div class="absolute bottom-6 left-6 text-white">
-                        <h3 class="text-xl font-bold uppercase tracking-tight">${g.title}</h3>
+                    <div class="absolute bottom-6 left-6 text-white pr-4">
+                        <h3 class="text-xl font-bold uppercase tracking-tight break-words">${g.title}</h3>
                         ${g.id.toString().startsWith('c_') ? '<span class="text-[10px] bg-accent/30 text-accent px-2 py-1 rounded-full uppercase font-bold mt-2 inline-block">Custom</span>' : ''}
                     </div>
                 </div>
@@ -439,8 +479,8 @@
                     total += s.time;
                     if(s.launches > 0) {
                         list.innerHTML += `<div class="p-4 glass rounded-xl flex justify-between text-xs font-bold uppercase">
-                            <span>${g.title}</span>
-                            <span class="text-accent">${Math.floor(s.time/60)}m</span>
+                            <span class="truncate pr-2">${g.title}</span>
+                            <span class="text-accent shrink-0">${Math.floor(s.time/60)}m</span>
                         </div>`;
                     }
                 });
@@ -479,9 +519,9 @@
         }
 
         function saveCustomGame() {
-            const title = document.getElementById('cg-title').value;
-            const url = document.getElementById('cg-url').value;
-            let img = document.getElementById('cg-img').value;
+            const title = document.getElementById('cg-title').value.trim();
+            const url = document.getElementById('cg-url').value.trim();
+            let img = document.getElementById('cg-img').value.trim();
 
             if (!title || !url) {
                 alert("Game Title and Game URL are required!");
@@ -500,6 +540,7 @@
             toggleAddGame();
             renderGrid();
             
+            // Reset fields
             document.getElementById('cg-title').value = '';
             document.getElementById('cg-url').value = '';
             document.getElementById('cg-img').value = '';
@@ -531,6 +572,27 @@
             c.style.left = e.clientX + 'px';
             c.style.top = e.clientY + 'px';
         });
+
+        // Initialize UI from saved state
+        updateMusicUI();
+
+        // Attempt to play immediately on load
+        if (state.musicOn) {
+            // Note: Many modern browsers block audio autoplay until the user interacts with the page.
+            let playPromise = bgm.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Browser autoplay policy prevented initial playback. Waiting for user interaction.");
+                    
+                    // Fallback: The second the user clicks ANYWHERE on the page, start the music.
+                    document.body.addEventListener('click', () => {
+                        if (state.musicOn && bgm.paused) {
+                            bgm.play().catch(e => console.error("Still unable to play audio:", e));
+                        }
+                    }, { once: true });
+                });
+            }
+        }
 
         setTimeout(() => {
             document.getElementById('loader').style.opacity = '0';
