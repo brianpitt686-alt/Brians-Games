@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Automatic Tab Cloak -->
     <title>Clever | Portal</title>
-    <link id="favicon" rel="icon" type="image/png" href="https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png">
-    
+    <link rel="icon" type="image/png" href="https://support.highlandschools.org/wp-content/uploads/2020/11/clever1.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: { accent: 'rgba(var(--accent-color), <alpha-value>)' }
@@ -19,219 +19,358 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     
-    <!-- Instant Theme Loader to prevent flashes -->
+    <!-- Instant Theme & Settings Loader -->
     <script>
         const savedTheme = localStorage.getItem('nx_theme') || 'dark';
         const savedColor = localStorage.getItem('nx_color') || '59, 130, 246';
+        const savedPerfMode = localStorage.getItem('nx_perfMode') === 'true';
+        
         document.documentElement.className = savedTheme;
+        if (savedPerfMode) document.documentElement.classList.add('perf-mode');
         document.documentElement.style.setProperty('--accent-color', savedColor);
     </script>
 
     <style>
         :root { 
-            --accent-color: 59, 130, 246; /* Default Blue, overridden by script above */
-            --cursor-color: rgb(var(--accent-color)); 
+            --accent-color: 59, 130, 246;
         }
-        body { cursor: none; transition: background-color 0.5s ease; scroll-behavior: smooth; overflow-x: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
-        .dark body { background-color: #020617; color: #f8fafc; }
-        .light body { background-color: #f1f5f9; color: #0f172a; }
-        #loader { position: fixed; inset: 0; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #020617; transition: opacity 0.8s ease; }
-        #custom-cursor { width: 20px; height: 20px; border: 2px solid var(--cursor-color); border-radius: 50%; position: fixed; pointer-events: none; z-index: 10000; transition: transform 0.1s ease-out; transform: translate(-50%, -50%); }
-        #stats-dashboard { position: fixed; top: 0; right: 0; height: 100vh; width: 400px; z-index: 60; transform: translateX(100%); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-        #stats-dashboard.active { transform: translateX(0); }
-        .glass { backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .dark .glass { background: rgba(15, 23, 42, 0.8); }
-        .light .glass { background: rgba(255, 255, 255, 0.85); border-color: rgba(0,0,0,0.05); }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            overflow-x: hidden;
+            cursor: none; /* Custom cursor */
+        }
+        .dark body {
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        
+        /* Glassmorphism */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        .dark .glass {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        /* PERFORMANCE MODE OVERRIDES */
+        html.perf-mode body { cursor: auto !important; }
+        html.perf-mode #custom-cursor { display: none !important; }
+        html.perf-mode * { box-shadow: none !important; }
+        html.perf-mode .glass {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            background: #ffffff !important;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        html.dark.perf-mode .glass {
+            background: #0f172a !important;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        /* Custom Cursor */
+        #custom-cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(var(--accent-color), 1);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: width 0.2s, height 0.2s;
+        }
+        body:active #custom-cursor {
+            width: 15px;
+            height: 15px;
+            background: rgba(var(--accent-color), 0.5);
+        }
+        
+        /* Modals & Animations */
+        .modal-enter { animation: fadeIn 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        
+        /* Dashboard Sidebar */
+        #stats-dashboard {
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        #stats-dashboard.active {
+            transform: translateX(0);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(var(--accent-color), 0.5); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(var(--accent-color), 1); }
+
+        /* SVG Icon Utilities */
+        .icon { stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     </style>
 </head>
-<body class="selection:bg-accent/30">
+<body class="antialiased min-h-screen relative transition-colors duration-500">
+    
+    <!-- Background Elements -->
+    <canvas id="live-bg" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+    <div id="custom-cursor"></div>
+    <div id="toast-container" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 z-50 flex flex-col gap-2"></div>
 
-    <!-- Live Background Canvas -->
-    <canvas id="live-bg" class="fixed inset-0 w-full h-full z-[-1]"></canvas>
-
-    <!-- Background Music Audio Element -->
-    <!-- Added autoplay attribute to try starting immediately -->
-    <audio id="bgm" loop preload="auto" autoplay>
-        <source src="https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/Warriyo,%20Laura%20Brehm%20-%20Mortals%20(feat.%20Laura%20Brehm)%20[NCS%20Release].mp3" type="audio/mpeg">
+    <!-- Audio Player -->
+    <audio id="bgm" loop>
+        <source src="bgm.mp3" type="audio/mpeg">
     </audio>
 
-    <!-- Loading Screen -->
-    <div id="loader">
-        <div class="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-        <h1 class="text-white font-black tracking-widest text-lg animate-pulse uppercase">Nexus Booting...</h1>
+    <!-- Initial Loader -->
+    <div id="loader" class="fixed inset-0 z-[100] bg-white dark:bg-slate-900 flex flex-col items-center justify-center transition-opacity duration-500">
+        <div class="w-16 h-16 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        <h2 class="mt-4 text-2xl font-bold text-accent tracking-widest">NEXUS ELITE</h2>
     </div>
 
-    <!-- Custom Mouse Cursor -->
-    <div id="custom-cursor"></div>
-
-    <!-- Navigation Bar -->
-    <nav class="fixed top-0 w-full z-50 glass border-b h-20 flex items-center justify-between px-8">
-        <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
-            <div class="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg text-white font-bold transition-colors duration-500">B</div>
-            <h1 class="text-xl font-extrabold tracking-tighter uppercase">Nexus<span class="text-accent transition-colors duration-500">Apex</span></h1>
-        </div>
-        <div class="flex items-center gap-6">
-            <button onclick="toggleDashboard()" class="flex flex-col items-end group">
-                <span id="user-rank" class="text-[10px] font-black text-accent uppercase tracking-widest transition-colors duration-500">NOOB</span>
-                <div class="w-24 h-1.5 bg-slate-300 dark:bg-white/10 rounded-full mt-1 overflow-hidden">
-                    <div id="xp-progress" class="h-full bg-accent transition-all duration-500" style="width: 0%"></div>
-                </div>
-            </button>
-            <div class="hidden sm:flex items-center gap-2 px-4 py-2 glass rounded-full border border-white/10" title="Daily Login Streak">
-                <span class="text-xl">🔥</span>
-                <span id="streak-counter" class="font-black text-sm">0</span>
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-40 border-b border-black/10 dark:border-white/10 p-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showPage('home')">
+                <div class="w-10 h-10 bg-accent text-white rounded-xl flex items-center justify-center font-black text-xl shadow-lg shadow-accent/50">NX</div>
+                <h1 class="text-2xl font-extrabold tracking-tight hidden sm:block">NEXUS <span class="text-accent">ELITE</span></h1>
             </div>
-            <button onclick="randomGame()" class="text-xl hover:scale-110 transition-transform" title="Surprise Me! (Random Game)">🎲</button>
-            <button onclick="toggleMusic()" id="music-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Background Music">🔊</button>
-            <button onclick="toggleCloak()" id="cloak-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Clever Cloak">🥸</button>
-            <button onclick="toggleSettings()" class="text-xl hover:scale-110 transition-transform" title="Settings">⚙️</button>
-            <button onclick="toggleTheme()" id="theme-btn" class="text-xl hover:scale-110 transition-transform" title="Toggle Light/Dark">🌙</button>
+
+            <!-- Search -->
+            <div class="flex-1 max-w-md relative">
+                <input type="text" id="search-input" onkeyup="renderGrid()" placeholder="Search library..." class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-full px-10 py-2 focus:outline-none focus:border-accent transition-colors">
+                <svg class="w-4 h-4 absolute left-4 top-3 opacity-50 icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+
+            <!-- Header Controls (Icons applied via JS/HTML) -->
+            <div class="flex items-center gap-2 text-black/70 dark:text-white/70">
+                <button onclick="randomGame()" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 hover:text-accent transition" title="Random Game">
+                    <svg class="w-5 h-5 icon" viewBox="0 0 24 24"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
+                </button>
+                <button id="music-btn" onclick="toggleMusic()" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 hover:text-accent transition" title="Toggle Music">
+                    <!-- Set by JS -->
+                </button>
+                <button id="cloak-btn" onclick="toggleCloak()" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 hover:text-accent transition" title="Tab Cloak">
+                    <!-- Set by JS -->
+                </button>
+                <button onclick="toggleDashboard()" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 hover:text-accent transition" title="Stats Dashboard">
+                    <svg class="w-5 h-5 icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                </button>
+                <button onclick="toggleSettings()" class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 hover:text-accent transition" title="Settings">
+                    <svg class="w-5 h-5 icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Categories -->
+        <div class="max-w-7xl mx-auto mt-4 flex gap-2 overflow-x-auto pb-2" id="category-filters">
+            <button onclick="setCategory('All')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold bg-accent text-white transition-colors">All</button>
+            <button onclick="setCategory('Action')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Action</button>
+            <button onclick="setCategory('Driving')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Driving</button>
+            <button onclick="setCategory('Puzzle')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Puzzle</button>
+            <button onclick="setCategory('Sports')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Sports</button>
+            <button onclick="setCategory('Retro')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Retro</button>
+            <button onclick="setCategory('Misc')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Misc</button>
+            <button onclick="toggleAddGame()" class="px-6 py-2 border border-accent text-accent border-dashed rounded-full font-bold hover:bg-accent hover:text-white flex items-center gap-2 transition-colors ml-auto">
+                <svg class="w-4 h-4 icon" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Custom
+            </button>
         </div>
     </nav>
 
-    <!-- Stats Dashboard Sidebar -->
-    <div id="stats-dashboard" class="glass border-l p-8 shadow-2xl overflow-y-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-2xl font-black uppercase">User <span class="text-accent transition-colors">Stats</span></h2>
-            <button onclick="toggleDashboard()" class="text-xs font-bold opacity-50 hover:opacity-100">CLOSE</button>
+    <!-- MAIN CONTENT: HOME -->
+    <main id="page-home" class="max-w-7xl mx-auto p-6 relative z-10">
+        <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Games rendered here via JS -->
         </div>
-        <div id="dashboard-content" class="space-y-4">
-             <div class="p-6 rounded-2xl bg-accent/10 border border-accent/20 transition-colors duration-500">
-                <p class="text-[10px] font-bold text-accent uppercase transition-colors">Total Playtime</p>
-                <p id="total-time-global" class="text-3xl font-black">0m</p>
-            </div>
-            <div id="game-stats-list" class="space-y-3"></div>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div id="settings-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div class="glass p-8 rounded-3xl w-full max-w-sm border border-white/10 shadow-2xl relative">
-            <button onclick="toggleSettings()" class="absolute top-6 right-6 font-bold opacity-50 hover:opacity-100 text-xs">CLOSE</button>
-            <h2 class="text-2xl font-black uppercase mb-6">Settings</h2>
-            <div>
-                <p class="text-xs font-bold text-accent uppercase mb-4">Theme Color</p>
-                <div class="flex gap-4">
-                    <button onclick="setColor('59, 130, 246')" class="w-12 h-12 rounded-full bg-[#3b82f6] border-2 border-white/20 hover:scale-110 transition-transform"></button>
-                    <button onclick="setColor('168, 85, 247')" class="w-12 h-12 rounded-full bg-[#a855f7] border-2 border-white/20 hover:scale-110 transition-transform"></button>
-                    <button onclick="setColor('34, 197, 94')" class="w-12 h-12 rounded-full bg-[#22c55e] border-2 border-white/20 hover:scale-110 transition-transform"></button>
-                    <button onclick="setColor('239, 68, 68')" class="w-12 h-12 rounded-full bg-[#ef4444] border-2 border-white/20 hover:scale-110 transition-transform"></button>
-                </div>
-                
-                <p class="text-xs font-bold text-accent uppercase mb-4 mt-8">Data & Advanced</p>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between glass p-4 rounded-xl border border-white/10">
-                        <span class="text-sm font-bold uppercase">Live Background</span>
-                        <input type="checkbox" id="live-bg-toggle" onchange="toggleLiveBg()" class="w-5 h-5 accent-accent cursor-pointer">
-                    </div>
-                    <button onclick="exportData()" class="w-full py-3 glass hover:bg-black/10 dark:hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold uppercase transition-colors">📥 Export Save Data</button>
-                    <label class="w-full py-3 glass hover:bg-black/10 dark:hover:bg-white/10 border border-white/10 rounded-xl text-sm font-bold uppercase transition-colors flex items-center justify-center cursor-pointer">
-                        📤 Import Save Data
-                        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importData(event)">
-                    </label>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Custom Game Modal -->
-    <div id="add-game-modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div class="glass p-8 rounded-3xl w-full max-w-md border border-white/10 shadow-2xl relative">
-            <button onclick="toggleAddGame()" class="absolute top-6 right-6 font-bold opacity-50 hover:opacity-100 text-xs">CANCEL</button>
-            <h2 class="text-2xl font-black uppercase mb-6">Add <span class="text-accent">Custom</span> Game</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-xs font-bold uppercase opacity-60">Game Title</label>
-                    <input type="text" id="cg-title" class="w-full mt-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent glass text-white placeholder-white/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase opacity-60">Game URL (Link)</label>
-                    <input type="text" id="cg-url" class="w-full mt-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent glass text-white placeholder-white/30">
-                </div>
-                <div>
-                    <label class="text-xs font-bold uppercase opacity-60">Cover Image URL (Optional)</label>
-                    <input type="text" id="cg-img" class="w-full mt-1 bg-black/20 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent glass text-white placeholder-white/30" placeholder="https://example.com/image.jpg">
-                </div>
-                <button onclick="saveCustomGame()" class="w-full py-4 mt-4 bg-accent hover:opacity-80 text-white rounded-xl font-black text-lg transition-all shadow-xl">ADD TO LIBRARY</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Picture-in-Picture Game Window -->
-    <div id="pip-window" class="fixed hidden z-[80] glass border-2 border-accent rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-opacity duration-300" style="width: 800px; height: 500px; top: 120px; left: 50%; transform: translateX(-50%);">
-        <div id="pip-header" class="h-12 bg-black/60 backdrop-blur-md flex justify-between items-center px-6 cursor-move select-none">
-            <span id="pip-window-title" class="font-bold text-white tracking-widest uppercase text-sm">Game Running</span>
-            <div class="flex gap-4 items-center">
-                <button onclick="toggleFullscreenPip()" class="text-white hover:text-accent font-bold text-lg" title="Fullscreen">⛶</button>
-                <button onclick="closePip()" class="text-white hover:text-red-500 font-bold text-xl" title="Close">✕</button>
-            </div>
-        </div>
-        <iframe id="pip-iframe" class="w-full flex-1 border-none bg-black"></iframe>
-    </div>
-
-    <!-- Toast Notification -->
-    <div id="toast-container" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-[200] flex flex-col gap-2 pointer-events-none"></div>
-
-    <!-- Main Content Area -->
-    <main class="pt-32 pb-10 max-w-7xl mx-auto px-6 min-h-[calc(100vh-80px)] flex flex-col justify-between">
-        <div>
-            <!-- Home Library Section -->
-            <section id="page-home">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-                    <h2 class="text-5xl md:text-6xl font-black tracking-tighter uppercase">My <span class="text-accent transition-colors duration-500">Library</span></h2>
-                    <div class="flex gap-4 w-full md:w-auto">
-                        <input type="text" id="search-input" oninput="renderGrid()" placeholder="Search games..." class="w-full md:w-64 bg-black/5 dark:bg-black/20 border border-black/10 dark:border-white/10 rounded-2xl px-6 py-4 focus:outline-none focus:border-accent glass placeholder-current/50 transition-colors">
-                        <button onclick="toggleAddGame()" class="shrink-0 px-6 py-4 glass hover:bg-black/5 dark:hover:bg-white/5 rounded-2xl border border-black/10 dark:border-white/10 font-bold transition-all text-xl" title="Add Custom Game">+</button>
-                    </div>
-                </div>
-
-                <!-- Categories -->
-                <div class="flex flex-wrap gap-3 mb-8" id="category-filters">
-                    <button onclick="setCategory('All')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold bg-accent text-white transition-colors">All</button>
-                    <button onclick="setCategory('Action')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Action</button>
-                    <button onclick="setCategory('Puzzle')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Puzzle</button>
-                    <button onclick="setCategory('Retro')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Retro</button>
-                    <button onclick="setCategory('Driving')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Driving</button>
-                    <button onclick="setCategory('Sports')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Sports</button>
-                    <button onclick="setCategory('Misc')" class="cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors">Misc</button>
-                </div>
-
-                <div id="game-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"></div>
-            </section>
-
-            <!-- Game Detail Section -->
-            <section id="page-detail" class="hidden">
-                <div class="flex flex-col lg:flex-row gap-12 items-center">
-                    <img id="detail-img" class="w-full lg:w-1/2 aspect-video rounded-[2rem] object-cover border shadow-2xl">
-                    <div class="w-full lg:w-1/2">
-                        <h2 id="detail-title" class="text-6xl font-black mb-4 tracking-tighter"></h2>
-                        <div class="flex items-center gap-4 mb-4">
-                            <p id="detail-stats" class="text-sm font-bold opacity-60">Time: 0m | Plays: 0</p>
-                            <div id="star-rating" class="text-3xl flex gap-1 cursor-pointer select-none drop-shadow-lg"></div>
-                        </div>
-                        <div class="flex gap-4 mt-8">
-                            <button id="play-btn" class="px-10 py-5 bg-accent hover:opacity-80 text-white rounded-2xl font-black text-xl transition-all shadow-xl">PLAY GAME</button>
-                            <button onclick="showPage('home')" class="px-8 py-5 glass rounded-2xl font-bold hover:bg-black/5 dark:hover:bg-white/5 transition-colors">BACK</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Copyright Footer -->
-        <footer class="mt-20 pt-8 pb-4 border-t border-black/10 dark:border-white/10 text-center">
-            <p class="text-[10px] font-extrabold uppercase tracking-[0.2em] opacity-40 hover:opacity-100 transition-opacity duration-300">
-                &copy; <span id="current-year"></span> Brian Pitt. All Rights Reserved.
-            </p>
-        </footer>
     </main>
 
-    <script>
-        // Set dynamic copyright year
-        document.getElementById('current-year').textContent = new Date().getFullYear();
+    <!-- MAIN CONTENT: DETAIL VIEW -->
+    <main id="page-detail" class="hidden max-w-5xl mx-auto p-6 relative z-10" data-id="">
+        <button onclick="showPage('home')" class="mb-6 px-4 py-2 bg-black/10 dark:bg-white/10 rounded-full font-bold hover:bg-accent hover:text-white transition flex items-center gap-2">
+            <svg class="w-4 h-4 icon" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg> Back to Library
+        </button>
+        <div class="glass rounded-[3rem] p-8 border border-white/10 flex flex-col md:flex-row gap-8 shadow-2xl">
+            <img id="detail-img" src="" class="w-full md:w-1/2 h-80 object-cover rounded-3xl shadow-lg border border-white/10">
+            <div class="flex-1 flex flex-col justify-center">
+                <h2 id="detail-title" class="text-5xl font-black mb-4 uppercase tracking-tighter"></h2>
+                
+                <div class="flex items-center gap-4 mb-6">
+                    <div id="star-rating" class="text-3xl cursor-pointer flex gap-1">
+                        <!-- Stars -->
+                    </div>
+                    <span class="text-sm opacity-50 font-bold uppercase tracking-wider">Rate Game</span>
+                </div>
 
-        const repoBase = "https://brianpitt686-alt.github.io/Brians-Games/Games/";
-        
+                <p id="detail-stats" class="text-lg font-bold text-accent mb-8 bg-accent/10 inline-block px-4 py-2 rounded-lg"></p>
+                
+                <button id="play-btn" class="bg-accent text-white px-8 py-4 rounded-2xl font-black text-2xl hover:scale-105 transition-transform shadow-[0_0_40px_rgba(var(--accent-color),0.5)]">
+                    LAUNCH SECURE PIP
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- PICTURE-IN-PICTURE (PiP) WINDOW -->
+    <div id="pip-window" class="hidden fixed w-[800px] h-[500px] bg-slate-900 border-2 border-accent rounded-2xl shadow-2xl z-[60] overflow-hidden flex flex-col" style="top: 120px; left: 50%; transform: translateX(-50%); transition: width 0.3s, height 0.3s, border-radius 0.3s;">
+        <div id="pip-header" class="bg-black text-white p-3 flex justify-between items-center cursor-move select-none border-b border-white/10">
+            <div class="font-bold flex items-center gap-2 text-accent tracking-widest"><span class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span> <span id="pip-window-title">Game</span></div>
+            <div class="flex gap-4">
+                <button onclick="toggleFullscreenPip()" class="hover:text-accent font-bold" title="Toggle Fullscreen">
+                    <svg class="w-4 h-4 icon" viewBox="0 0 24 24"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>
+                </button>
+                <button onclick="closePip()" class="hover:text-red-500 font-bold" title="Close">
+                    <svg class="w-4 h-4 icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        </div>
+        <iframe id="pip-iframe" class="flex-1 w-full bg-black border-none"></iframe>
+    </div>
+
+    <!-- SIDEBAR: STATS DASHBOARD -->
+    <div id="stats-dashboard" class="fixed top-0 right-0 w-80 h-full glass border-l border-white/10 z-50 p-6 flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-black text-accent tracking-tighter">DASHBOARD</h2>
+            <button onclick="toggleDashboard()" class="hover:text-red-500 text-black dark:text-white transition">
+                <svg class="w-6 h-6 icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+
+        <div class="mb-8 p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-white/10 text-center">
+            <p class="text-sm font-bold opacity-60 uppercase tracking-widest mb-1">Current Rank</p>
+            <p id="user-rank" class="text-3xl font-black text-accent mb-3">NOOB</p>
+            <div class="w-full h-3 bg-black/20 rounded-full overflow-hidden">
+                <div id="xp-progress" class="h-full bg-accent w-0 transition-all duration-1000"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="p-4 bg-black/5 dark:bg-white/5 rounded-2xl text-center border border-white/10">
+                <p class="text-2xl font-black" id="streak-counter">0</p>
+                <p class="text-[10px] font-bold opacity-60 uppercase">Day Streak</p>
+            </div>
+            <div class="p-4 bg-black/5 dark:bg-white/5 rounded-2xl text-center border border-white/10">
+                <p class="text-2xl font-black text-accent" id="total-time-global">0m</p>
+                <p class="text-[10px] font-bold opacity-60 uppercase">Total Time</p>
+            </div>
+        </div>
+
+        <h3 class="font-bold opacity-60 uppercase text-sm mb-4">Library Stats</h3>
+        <div id="game-stats-list" class="flex-1 overflow-y-auto flex flex-col gap-2 pr-2">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- MODAL: ADD CUSTOM GAME -->
+    <div id="add-game-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-md p-8 rounded-[2rem] border border-white/10 shadow-2xl modal-enter">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-black tracking-tight">ADD <span class="text-accent">CUSTOM</span></h2>
+                <button onclick="toggleAddGame()" class="hover:text-red-500 transition">
+                    <svg class="w-6 h-6 icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase opacity-60 mb-2">Game Title</label>
+                    <input type="text" id="cg-title" placeholder="e.g. My Cool Game" class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase opacity-60 mb-2">Game URL</label>
+                    <input type="url" id="cg-url" placeholder="https://..." class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase opacity-60 mb-2">Cover Image URL (Optional)</label>
+                    <input type="url" id="cg-img" placeholder="https://..." class="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent">
+                </div>
+                <button onclick="saveCustomGame()" class="w-full bg-accent text-white font-bold py-4 rounded-xl mt-4 hover:scale-[1.02] transition-transform">ADD TO LIBRARY</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SETTINGS -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-sm p-8 rounded-[2rem] border border-white/10 shadow-2xl modal-enter">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-black tracking-tight">SYSTEM <span class="text-accent">SETTINGS</span></h2>
+                <button onclick="toggleSettings()" class="hover:text-red-500 transition">
+                    <svg class="w-6 h-6 icon" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="flex justify-between items-center bg-black/5 dark:bg-white/5 p-4 rounded-xl">
+                    <span class="font-bold">Dark Mode</span>
+                    <button onclick="toggleTheme()" class="px-4 py-1 bg-accent text-white rounded-full text-sm font-bold">Toggle</button>
+                </div>
+
+                <div class="flex justify-between items-center bg-black/5 dark:bg-white/5 p-4 rounded-xl">
+                    <span class="font-bold">Live Background</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="live-bg-toggle" class="sr-only peer" onchange="toggleLiveBg()">
+                        <div class="w-11 h-6 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                    </label>
+                </div>
+
+                <!-- PERFORMANCE MODE -->
+                <div class="flex justify-between items-center bg-black/5 dark:bg-white/5 p-4 rounded-xl">
+                    <div>
+                        <span class="font-bold block">Performance Mode</span>
+                        <span class="text-[10px] opacity-60 uppercase">Disables blurs & heavy VFX</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="perf-mode-toggle" class="sr-only peer" onchange="togglePerfMode()">
+                        <div class="w-11 h-6 bg-gray-400 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                    </label>
+                </div>
+                
+                <div class="pt-2">
+                    <span class="font-bold block mb-3 opacity-60 uppercase text-xs">Accent Color</span>
+                    <div class="flex gap-2">
+                        <div onclick="setColor('59, 130, 246')" class="w-10 h-10 rounded-full bg-blue-500 cursor-pointer border-2 hover:scale-110 transition-transform"></div>
+                        <div onclick="setColor('168, 85, 247')" class="w-10 h-10 rounded-full bg-purple-500 cursor-pointer border-2 hover:scale-110 transition-transform"></div>
+                        <div onclick="setColor('239, 68, 68')" class="w-10 h-10 rounded-full bg-red-500 cursor-pointer border-2 hover:scale-110 transition-transform"></div>
+                        <div onclick="setColor('16, 185, 129')" class="w-10 h-10 rounded-full bg-emerald-500 cursor-pointer border-2 hover:scale-110 transition-transform"></div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-black/10 dark:border-white/10">
+                    <span class="font-bold block mb-3 opacity-60 uppercase text-xs">Data Management</span>
+                    <div class="flex gap-2 text-sm">
+                        <button onclick="exportData()" class="flex-1 bg-accent/20 text-accent font-bold py-2 rounded-xl hover:bg-accent hover:text-white transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Export
+                        </button>
+                        <label class="flex-1 bg-black/10 dark:bg-white/10 font-bold py-2 rounded-xl hover:bg-black/20 dark:hover:bg-white/20 transition cursor-pointer flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4 icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Import
+                            <input type="file" class="hidden" accept=".json" onchange="importData(event)">
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CORE LOGIC -->
+    <script>
+        // SVG ICONS DICTIONARY
+        const ICONS = {
+            musicOn: `<svg class="w-5 h-5 icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>`,
+            musicOff: `<svg class="w-5 h-5 icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>`,
+            eyeOff: `<svg class="w-5 h-5 icon" viewBox="0 0 24 24"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" y1="2" x2="22" y2="22"></line></svg>`,
+            eyeOn: `<svg class="w-5 h-5 icon" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
+            trash: `<svg class="w-5 h-5 icon" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`,
+            starFilled: `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+            starOutlined: `<svg class="w-6 h-6 fill-transparent icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+            starMiniFilled: `<svg class="w-4 h-4 fill-current inline-block mr-[2px]" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`
+        };
+
+        const repoBase = ""; 
+        const additionalGames = []; 
+
+        // ==============================================================
+        // 🎮 PASTE YOUR FULL baseGames ARRAY OVER THIS BLOCK!
+        // ==============================================================
         const baseGames = [
             { id: '1', title: '1v1.space', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/1v1space/index.html', cover: 'https://1kh0.github.io/projects/1v1space/thumb.png' },
             { id: '2', title: '2048', url: 'https://brianpitt686-alt.github.io/Brians-Games/Games/2048/index.html', cover: 'https://1kh0.github.io/projects/2048/thumb.png' },
@@ -338,6 +477,7 @@
         
         ];
 
+        // ==============================================================
 
         // Dynamically assign categories based on keywords
         const games = baseGames.map(g => {
@@ -349,12 +489,13 @@
             else if(t.includes('mario') || t.includes('vex') || t.includes('gun') || t.includes('krunker') || t.includes('smash') || t.includes('slope') || t.includes('run') || t.includes('tunnel')) cat = 'Action';
             else if(t.includes('mario') || t.includes('retro') || t.includes('classic') || t.includes('wolf')) cat = 'Retro';
             return { ...g, category: cat };
-        });
+        }).concat(additionalGames);
 
-        // Safe JSON parsing function to prevent errors on bad localStorage data
+        const LS = window.localStorage;
+
         function getSavedJSON(key, defaultVal) {
             try {
-                const data = localStorage.getItem(key);
+                const data = LS.getItem(key);
                 return data ? JSON.parse(data) : defaultVal;
             } catch (e) {
                 return defaultVal;
@@ -362,52 +503,46 @@
         }
 
         let state = {
-            theme: localStorage.getItem('nx_theme') || 'dark',
-            color: localStorage.getItem('nx_color') || '59, 130, 246',
-            musicOn: localStorage.getItem('nx_music') !== 'false', 
+            theme: LS.getItem('nx_theme') || 'dark',
+            color: LS.getItem('nx_color') || '59, 130, 246',
+            musicOn: LS.getItem('nx_music') !== 'false', 
             stats: getSavedJSON('nx_stats', {}),
             favorites: getSavedJSON('nx_favorites', []),
             customGames: getSavedJSON('nx_custom_games', []),
             hiddenGames: getSavedJSON('nx_hidden_games', []),
-            
-            // New Advanced State
             ratings: getSavedJSON('nx_ratings', {}),
             achievements: getSavedJSON('nx_achievements', []),
-            streak: parseInt(localStorage.getItem('nx_streak') || '0'),
-            lastLogin: localStorage.getItem('nx_lastLogin') || '',
-            liveBgOn: localStorage.getItem('nx_liveBg') === 'true',
+            streak: parseInt(LS.getItem('nx_streak') || '0'),
+            lastLogin: LS.getItem('nx_lastLogin') || '',
+            liveBgOn: LS.getItem('nx_liveBg') !== 'false',
+            perfMode: LS.getItem('nx_perfMode') === 'true',
             currentCategory: 'All',
-
             activeGameId: null,
             startTime: null
         };
 
         function save() {
-            localStorage.setItem('nx_stats', JSON.stringify(state.stats));
-            localStorage.setItem('nx_theme', state.theme);
-            localStorage.setItem('nx_color', state.color);
-            localStorage.setItem('nx_music', state.musicOn);
-            localStorage.setItem('nx_favorites', JSON.stringify(state.favorites));
-            localStorage.setItem('nx_custom_games', JSON.stringify(state.customGames));
-            localStorage.setItem('nx_hidden_games', JSON.stringify(state.hiddenGames));
-            
-            // Save New Data
-            localStorage.setItem('nx_ratings', JSON.stringify(state.ratings));
-            localStorage.setItem('nx_achievements', JSON.stringify(state.achievements));
-            localStorage.setItem('nx_streak', state.streak.toString());
-            localStorage.setItem('nx_lastLogin', state.lastLogin);
-            localStorage.setItem('nx_liveBg', state.liveBgOn);
-            
+            LS.setItem('nx_stats', JSON.stringify(state.stats));
+            LS.setItem('nx_theme', state.theme);
+            LS.setItem('nx_color', state.color);
+            LS.setItem('nx_music', state.musicOn);
+            LS.setItem('nx_favorites', JSON.stringify(state.favorites));
+            LS.setItem('nx_custom_games', JSON.stringify(state.customGames));
+            LS.setItem('nx_hidden_games', JSON.stringify(state.hiddenGames));
+            LS.setItem('nx_ratings', JSON.stringify(state.ratings));
+            LS.setItem('nx_achievements', JSON.stringify(state.achievements));
+            LS.setItem('nx_streak', state.streak.toString());
+            LS.setItem('nx_lastLogin', state.lastLogin);
+            LS.setItem('nx_liveBg', state.liveBgOn);
+            LS.setItem('nx_perfMode', state.perfMode);
             updateRankUI();
         }
-
-        // --- NEW GLOBAL FUNCTIONS ---
 
         function showToast(msg) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'bg-accent text-white px-6 py-3 rounded-full font-bold shadow-2xl transition-all duration-500 transform translate-y-10 opacity-0';
-            toast.innerText = msg;
+            toast.innerHTML = msg;
             container.appendChild(toast);
             
             setTimeout(() => { toast.classList.remove('translate-y-10', 'opacity-0'); }, 10);
@@ -421,7 +556,7 @@
             if(!state.achievements.includes(badgeId)) {
                 state.achievements.push(badgeId);
                 save();
-                showToast(`🏆 Achievement Unlocked: ${badgeId}!`);
+                showToast(`<div class="flex items-center gap-2"><svg class="w-5 h-5 icon" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg> Achievement Unlocked: ${badgeId}!</div>`);
             }
         }
 
@@ -431,7 +566,7 @@
             dlAnchorElem.setAttribute("href", dataStr);
             dlAnchorElem.setAttribute("download", "nexus_save.json");
             dlAnchorElem.click();
-            showToast("✅ Save Data Exported");
+            showToast("Save Data Exported");
         }
 
         function importData(event) {
@@ -445,7 +580,7 @@
                     save();
                     location.reload();
                 } catch(err) {
-                    alert("Invalid Save File!");
+                    showToast("Invalid Save File!");
                 }
             };
             reader.readAsText(file);
@@ -454,7 +589,7 @@
         function setCategory(cat) {
             state.currentCategory = cat;
             document.querySelectorAll('.cat-btn').forEach(btn => {
-                if(btn.innerText === cat) {
+                if(btn.innerText.includes(cat)) {
                     btn.className = 'cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold bg-accent text-white transition-colors';
                 } else {
                     btn.className = 'cat-btn px-6 py-2 glass border border-white/10 rounded-full font-bold hover:bg-black/5 dark:hover:bg-white/10 transition-colors';
@@ -482,19 +617,45 @@
         function renderStars(rating) {
             let html = '';
             for(let i=1; i<=5; i++) {
-                html += `<span onclick="rateGame(${i})" class="${i <= rating ? 'text-yellow-400' : 'text-gray-500'} hover:text-yellow-300 transition-colors">★</span>`;
+                html += `<div onclick="rateGame(${i})" class="${i <= rating ? 'text-yellow-400' : 'text-gray-500'} hover:text-yellow-300 transition-colors cursor-pointer">${ICONS.starFilled}</div>`;
             }
             document.getElementById('star-rating').innerHTML = html;
+        }
+
+        // --- Performance Mode Toggle ---
+        function togglePerfMode() {
+            state.perfMode = document.getElementById('perf-mode-toggle').checked;
+            if (state.perfMode) {
+                document.documentElement.classList.add('perf-mode');
+                // Auto-disable live bg if perf mode goes on
+                document.getElementById('live-bg-toggle').checked = false;
+                state.liveBgOn = false;
+            } else {
+                document.documentElement.classList.remove('perf-mode');
+            }
+            save();
+            initCanvas(); // restart/clear canvas context
         }
 
         // Live Background Canvas Logic
         const canvas = document.getElementById('live-bg');
         const ctx = canvas.getContext('2d');
         let particles = [];
+        let animationId;
         
         function initCanvas() {
+            cancelAnimationFrame(animationId);
+            document.getElementById('perf-mode-toggle').checked = state.perfMode;
+            document.getElementById('live-bg-toggle').checked = state.liveBgOn;
+            
+            if (state.perfMode) {
+                canvas.style.display = 'none';
+                return; // Do not initialize intensive items
+            }
+            
             resizeCanvas();
             window.addEventListener('resize', resizeCanvas);
+            particles = [];
             for(let i=0; i<60; i++) {
                 particles.push({
                     x: Math.random() * canvas.width,
@@ -504,7 +665,6 @@
                     size: Math.random() * 2 + 0.5
                 });
             }
-            document.getElementById('live-bg-toggle').checked = state.liveBgOn;
             animateCanvas();
         }
         
@@ -514,14 +674,13 @@
         }
 
         function animateCanvas() {
-            requestAnimationFrame(animateCanvas);
-            if (!state.liveBgOn) {
+            if (!state.liveBgOn || state.perfMode) {
                 canvas.style.display = 'none';
                 return;
             }
             canvas.style.display = 'block';
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = document.documentElement.className === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
+            ctx.fillStyle = document.documentElement.className.includes('dark') ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)';
             
             particles.forEach(p => {
                 p.x += p.vx;
@@ -532,11 +691,13 @@
                 ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
                 ctx.fill();
             });
+            animationId = requestAnimationFrame(animateCanvas);
         }
 
         function toggleLiveBg() {
             state.liveBgOn = document.getElementById('live-bg-toggle').checked;
             save();
+            if (state.liveBgOn && !state.perfMode) initCanvas();
         }
         
         function checkStreak() {
@@ -552,7 +713,7 @@
             if (state.lastLogin === yesterday.toDateString()) {
                 state.streak++;
             } else if (state.lastLogin) {
-                state.streak = 1; // Streak broken
+                state.streak = 1;
             } else {
                 state.streak = 1; 
             }
@@ -565,7 +726,7 @@
 
         // --- MUSIC PLAYER ---
         const bgm = document.getElementById('bgm');
-        bgm.volume = 0.4; // Soft background volume
+        bgm.volume = 0.4;
 
         function toggleMusic() {
             state.musicOn = !state.musicOn;
@@ -580,49 +741,43 @@
         }
 
         function updateMusicUI() {
-            document.getElementById('music-btn').innerText = state.musicOn ? "🔊" : "🔈";
+            document.getElementById('music-btn').innerHTML = state.musicOn ? ICONS.musicOn : ICONS.musicOff;
         }
 
-       function launchGame(g) {
-    // Stats init
-    if (!state.stats[g.id]) state.stats[g.id] = { time: 0, launches: 0 };
-    state.stats[g.id].launches++;
-    state.activeGameId = g.id;
-    state.startTime = Date.now();
+        function launchGame(g) {
+            if (!state.stats[g.id]) state.stats[g.id] = { time: 0, launches: 0 };
+            state.stats[g.id].launches++;
+            state.activeGameId = g.id;
+            state.startTime = Date.now();
 
-    // Achievements
-    const hour = new Date().getHours();
-    if (hour >= 23 || hour <= 4) unlockBadge('Night Owl');
+            const hour = new Date().getHours();
+            if (hour >= 23 || hour <= 4) unlockBadge('Night Owl');
 
-    const playedCount = Object.values(state.stats).filter(s => s.launches > 0).length;
-    if (playedCount >= 20) unlockBadge('Explorer');
+            const playedCount = Object.values(state.stats).filter(s => s.launches > 0).length;
+            if (playedCount >= 20) unlockBadge('Explorer');
 
-    save();
+            save();
 
-    const targetUrl = g.url;
+            const targetUrl = g.url || (repoBase + (g.folder ? (g.folder + "/") : "") + "index.html");
 
-    // Open blank tab (must be triggered by a user click or popup blockers will stop it)
-    const newTab = window.open("about:blank", "_blank");
-    if (!newTab) {
-        alert("Popup blocked! Allow popups for this site.");
-        return;
-    }
+            const newTab = window.open("about:blank", "_blank");
+            if (!newTab) {
+                showToast("Popup blocked! Opening in PiP mode instead.");
+                openPipGame(g, targetUrl);
+                return;
+            }
 
-    // Cloaked about:blank page
-    const cloakTitle = "IXL";
-    const cloakIcon = "https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png"; // your icon
+            const cloakTitle = "IXL";
+            const cloakIcon = "https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png";
+            const safeUrl = String(targetUrl).replace(/"/g, "&quot;");
 
-    // Basic escaping so quotes in URLs don't break the HTML string
-    const safeUrl = String(targetUrl).replace(/"/g, "&quot;");
-
-    newTab.document.open();
-    newTab.document.write(`
-<!DOCTYPE html>
+            newTab.document.open();
+            newTab.document.write(`<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
   <title>${cloakTitle}</title>
-  <link rel="icon" href="${cloakIcon}">
+  <link rel="icon" type="image/png" href="${cloakIcon}">
   <meta name="referrer" content="no-referrer">
   <style>
     html, body { margin:0; padding:0; height:100%; overflow:hidden; background:#fff; }
@@ -632,39 +787,18 @@
 <body>
   <iframe src="${safeUrl}" allowfullscreen></iframe>
 </body>
-</html>
-    `);
-    newTab.document.close();
-}
-                iframe {
-                    border: none;
-                    width: 100%;
-                    height: 100%;
-                }
-            </style>
-        </head>
-        <body>
-            <iframe src="${targetUrl}" allowfullscreen></iframe>
-        </body>
-        </html>
-    `);
+</html>`);
+            newTab.document.close();
+        }
 
-    newTab.document.close();
-}
-           
-            
-            // Check Achievements
-            const hour = new Date().getHours();
-            if (hour >= 23 || hour <= 4) unlockBadge('Night Owl');
-            
-            const playedCount = Object.values(state.stats).filter(s => s.launches > 0).length;
-            if (playedCount >= 20) unlockBadge('Explorer');
+        function openPipGame(g, targetUrl) {
+            const pip = document.getElementById('pip-window');
+            const iframe = document.getElementById('pip-iframe');
+            document.getElementById('pip-window-title').innerText = g.title;
+            iframe.src = targetUrl;
+            pip.classList.remove('hidden');
+        }
 
-            save();
-
-            const targetUrl = g.url || (repoBase + g.folder + "/index.html");
-            
-           
         function closePip() {
             document.getElementById('pip-window').classList.add('hidden');
             document.getElementById('pip-iframe').src = '';
@@ -737,12 +871,10 @@
                 allGames = allGames.filter(g => g.title.toLowerCase().includes(searchTerm));
             }
             
-            // Filter by selected category
             if (state.currentCategory !== 'All') {
                 allGames = allGames.filter(g => (g.category || 'Misc') === state.currentCategory);
             }
 
-            // Sort logic: Favorites -> Ratings -> Alphabetical
             allGames.sort((a, b) => {
                 const aFav = state.favorites.includes(a.id);
                 const bFav = state.favorites.includes(b.id);
@@ -759,23 +891,21 @@
                 const isFav = state.favorites.includes(g.id);
                 const rating = state.ratings[g.id] || 0;
                 let starsHTML = '';
-                if(rating > 0) starsHTML = `<div class="absolute top-4 left-1/2 transform -translate-x-1/2 text-yellow-400 text-xs font-black drop-shadow-md z-10">${'★'.repeat(rating)}</div>`;
+                if(rating > 0) starsHTML = `<div class="absolute top-4 left-1/2 transform -translate-x-1/2 text-yellow-400 font-black drop-shadow-md z-10 flex">${ICONS.starMiniFilled.repeat(rating)}</div>`;
 
                 return `
-                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border hover:border-accent/50 transition-all duration-300 cursor-pointer bg-black/20">
+                <div onclick="openDetail('${g.id}')" class="group relative h-64 rounded-[2rem] overflow-hidden glass border border-transparent hover:border-accent/50 transition-all duration-300 cursor-pointer bg-black/20">
                     <img src="${g.cover}" onerror="this.onerror=null; this.src='https://placehold.co/600x400/0f172a/cccccc?text=${encodeURIComponent(g.title)}&font=Montserrat'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-60">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                     
                     ${starsHTML}
 
-                    <!-- Delete Game Button -->
-                    <button onclick="deleteGame(event, '${g.id}')" class="absolute top-4 left-4 text-xl z-10 transition-transform hover:scale-125 text-white/30 hover:text-red-500 bg-black/30 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-md" title="Remove Game">
-                        🗑️
+                    <button onclick="deleteGame(event, '${g.id}')" class="absolute top-4 left-4 z-10 transition-transform hover:scale-110 text-white/40 hover:text-red-500 bg-black/30 rounded-full w-9 h-9 flex items-center justify-center backdrop-blur-md" title="Remove Game">
+                        ${ICONS.trash}
                     </button>
 
-                    <!-- Favorite Game Button -->
-                    <button onclick="toggleFav(event, '${g.id}')" class="absolute top-4 right-4 text-2xl z-10 transition-transform hover:scale-125 ${isFav ? 'text-yellow-400' : 'text-white/30 hover:text-white'}">
-                        ${isFav ? '★' : '☆'}
+                    <button onclick="toggleFav(event, '${g.id}')" class="absolute top-4 right-4 z-10 transition-transform hover:scale-110 ${isFav ? 'text-yellow-400' : 'text-white/40 hover:text-white'}">
+                        ${isFav ? ICONS.starFilled : ICONS.starOutlined}
                     </button>
 
                     <div class="absolute bottom-6 left-6 text-white pr-4">
@@ -787,7 +917,7 @@
         }
 
         function deleteGame(e, id) {
-            e.stopPropagation(); // Prevent opening the game details
+            e.stopPropagation(); 
             if (confirm("Are you sure you want to remove this game from your library?")) {
                 if (id.toString().startsWith('c_')) {
                     state.customGames = state.customGames.filter(g => g.id !== id);
@@ -796,6 +926,7 @@
                 }
                 save();
                 renderGrid();
+                showToast("Game removed from library");
             }
         }
 
@@ -861,11 +992,12 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // --- THEME & SETTINGS ---
         function toggleTheme() {
             state.theme = state.theme === 'dark' ? 'light' : 'dark';
             document.documentElement.className = state.theme;
+            if (state.perfMode) document.documentElement.classList.add('perf-mode');
             save();
+            if (!state.perfMode) initCanvas(); // Redraw canvas with appropriate colors
         }
 
         function toggleSettings() {
@@ -879,7 +1011,6 @@
             save();
         }
 
-        // --- CUSTOM GAMES ---
         function toggleAddGame() {
             const modal = document.getElementById('add-game-modal');
             modal.classList.toggle('hidden');
@@ -891,7 +1022,7 @@
             let img = document.getElementById('cg-img').value.trim();
 
             if (!title || !url) {
-                alert("Game Title and Game URL are required!");
+                showToast("Game Title and Game URL are required!");
                 return;
             }
 
@@ -910,50 +1041,48 @@
             save();
             toggleAddGame();
             renderGrid();
+            showToast("Custom game added!");
             
-            // Reset fields
             document.getElementById('cg-title').value = '';
             document.getElementById('cg-url').value = '';
             document.getElementById('cg-img').value = '';
         }
 
-        // --- TAB CLOAK ---
-        // Tab cloak is automatically on via the HTML <head> tags.
         let isCloaked = true; 
         const originalTitle = "Brian's Nexus | Elite";
         
         function toggleCloak() {
             isCloaked = !isCloaked;
             let link = document.getElementById("favicon");
+            let btn = document.getElementById('cloak-btn');
             
             if (isCloaked) {
                 document.title = "Clever | Portal";
                 link.href = "https://clever.com/favicon.ico";
-                document.getElementById('cloak-btn').innerText = "🥸"; 
+                btn.innerHTML = ICONS.eyeOff; 
             } else {
                 document.title = originalTitle;
-                link.href = "data:image/x-icon;base64,"; // Removes the favicon
-                document.getElementById('cloak-btn').innerText = "👻"; 
+                link.href = "https://raw.githubusercontent.com/brianpitt686-alt/Brians-Games/main/favicon.png";
+                btn.innerHTML = ICONS.eyeOn; 
             }
         }
 
-        // --- INIT ---
         window.addEventListener('mousemove', (e) => {
+            if(state.perfMode) return;
             const c = document.getElementById('custom-cursor');
             c.style.left = e.clientX + 'px';
             c.style.top = e.clientY + 'px';
         });
         
-        // --- PiP Drag Logic ---
         const pipHeader = document.getElementById('pip-header');
         const pipWindow = document.getElementById('pip-window');
         let isDragging = false, startX, startY, startLeft, startTop;
 
         pipHeader.addEventListener('mousedown', (e) => {
-            if(e.target.tagName === 'BUTTON') return;
+            if(e.target.tagName === 'BUTTON' || e.target.tagName === 'svg' || e.target.tagName === 'polyline' || e.target.tagName === 'line') return;
             isDragging = true;
             startX = e.clientX; startY = e.clientY;
-            pipWindow.style.transform = 'none'; // Strip centered transform before drag
+            pipWindow.style.transform = 'none'; 
             startLeft = pipWindow.offsetLeft;
             startTop = pipWindow.offsetTop;
         });
@@ -964,55 +1093,51 @@
         });
         window.addEventListener('mouseup', () => isDragging = false);
 
-        // --- Stealth & Auto-Mute ---
         window.addEventListener('blur', () => {
             bgm.pause();
-            if(!pipWindow.classList.contains('hidden')) pipWindow.style.opacity = '0.02'; // Dim stealth
+            if(!pipWindow.classList.contains('hidden')) pipWindow.style.opacity = '0.02'; 
         });
         window.addEventListener('focus', () => {
             if (state.musicOn) bgm.play().catch(()=>{});
             pipWindow.style.opacity = '1';
         });
 
-        // Panic Key Action (` or ~ or Esc key)
         window.addEventListener('keydown', (e) => {
             if (e.key === '`' || e.key === '~' || e.key === 'Escape') {
-                window.location.href = 'https://clever.com/in/jcs-inc.org/student/portal';
+                window.location.href = 'https://classroom.google.com';
             }
         });
 
-        // Initialize UI from saved state
-        updateMusicUI();
-        initCanvas();
-        checkStreak();
+        // Lifecycle & Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('cloak-btn').innerHTML = ICONS.eyeOff;
+            updateMusicUI();
+            initCanvas();
+            checkStreak();
 
-        // Attempt to play immediately on load
-        if (state.musicOn) {
-            // Note: Many modern browsers block audio autoplay until the user interacts with the page.
-            let playPromise = bgm.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.log("Browser autoplay policy prevented initial playback. Waiting for user interaction.");
-                    
-                    // Fallback: The second the user clicks ANYWHERE on the page, start the music.
-                    document.body.addEventListener('click', () => {
-                        if (state.musicOn && bgm.paused) {
-                            bgm.play().catch(e => console.error("Still unable to play audio:", e));
-                        }
-                    }, { once: true });
-                });
+            if (state.musicOn) {
+                let playPromise = bgm.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        document.body.addEventListener('click', () => {
+                            if (state.musicOn && bgm.paused) {
+                                bgm.play().catch(e => console.error(e));
+                            }
+                        }, { once: true });
+                    });
+                }
             }
-        }
 
-        setTimeout(() => {
-            document.getElementById('loader').style.opacity = '0';
-            setTimeout(() => document.getElementById('loader').style.display = 'none', 800);
-            updateRankUI();
-            renderGrid();
-        }, 1000);
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 500);
+                updateRankUI();
+                renderGrid();
+            }, 1000);
 
-        setInterval(updateTimeSpent, 5000);
-            
+            setInterval(updateTimeSpent, 5000);
+        });
     </script>
 </body>
 </html>
