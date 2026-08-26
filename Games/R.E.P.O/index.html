@@ -2,12 +2,14 @@
 <html lang="en-us">
 
 <head>
-    
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
     <title>Unity WebGL Player | R.E.P.O</title>
+
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+
     <style>
         html,
         body {
@@ -16,6 +18,7 @@
             overflow: hidden;
             height: 100%;
             width: 100%;
+            background: black;
         }
 
         #unity-container {
@@ -25,123 +28,499 @@
             top: 0;
             left: 0;
         }
+
+        #unity-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #loading-text {
+            color: white;
+            font-family: cursive;
+            font-size: 48px;
+            text-align: center;
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body>
-    <div id="loading-text" style="color: black; font-family: cursive; font-size: 48px; text-align: center; margin-top: 20px;">LOADING...</div>
+
+    <div id="loading-text">
+        LOADING...
+    </div>
+
     <div id="unity-container" class="unity-desktop" hidden>
+
         <canvas id="unity-canvas" tabindex="-1"></canvas>
+
         <div id="unity-loading-bar">
             <div id="unity-logo"></div>
+
             <div id="unity-progress-bar-empty">
                 <div id="unity-progress-bar-full"></div>
             </div>
         </div>
-        <div id="unity-warning"> </div>
-    </div>
-    <script>
-        var container = document.querySelector("#unity-container");
-        var canvas = document.querySelector("#unity-canvas");
-        var loadingBar = document.querySelector("#unity-loading-bar");
-        var progressBarFull = document.querySelector("#unity-progress-bar-full");
-        var fullscreenButton = document.querySelector("#unity-fullscreen-button");
-        var warningBanner = document.querySelector("#unity-warning");
 
+        <div id="unity-warning"></div>
+
+    </div>
+
+    <script>
+
+        const container = document.querySelector("#unity-container");
+        const canvas = document.querySelector("#unity-canvas");
+        const loadingBar = document.querySelector("#unity-loading-bar");
+        const progressBarFull = document.querySelector("#unity-progress-bar-full");
+        const warningBanner = document.querySelector("#unity-warning");
+        const loadingText = document.querySelector("#loading-text");
+
+
+        /*
+         * Unity warning banner
+         */
         function unityShowBanner(msg, type) {
+
             function updateBannerVisibility() {
-                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+                warningBanner.style.display =
+                    warningBanner.children.length ? "block" : "none";
             }
-            var div = document.createElement('div');
+
+            const div = document.createElement("div");
+
             div.innerHTML = msg;
-            warningBanner.appendChild(div);
-            if (type == 'error') div.style = 'background: red; padding: 10px;';
-            else {
-                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+
+            if (type === "error") {
+
+                div.style =
+                    "background: red; padding: 10px; color: white;";
+
+            } else if (type === "warning") {
+
+                div.style =
+                    "background: yellow; padding: 10px; color: black;";
+
                 setTimeout(function () {
-                    warningBanner.removeChild(div);
+
+                    if (div.parentNode) {
+                        div.parentNode.removeChild(div);
+                    }
+
                     updateBannerVisibility();
+
                 }, 5000);
             }
+
+            warningBanner.appendChild(div);
+
             updateBannerVisibility();
         }
 
-        function mergeFiles(fileParts) {
-            return new Promise((resolve, reject) => {
-                let buffers = [];
 
-                function fetchPart(index) {
-                    if (index >= fileParts.length) {
-                        let mergedBlob = new Blob(buffers);
-                        let mergedFileUrl = URL.createObjectURL(mergedBlob);
-                        resolve(mergedFileUrl);
-                        return;
-                    }
-                    fetch(fileParts[index]).then((response) => response.arrayBuffer()).then((data) => {
-                        buffers.push(data);
-                        fetchPart(index + 1);
-                    }).catch(reject);
-                }
-                fetchPart(0);
-            });
-        }
-
+        /*
+         * Get all parts of a split file
+         */
         function getParts(file, start, end) {
-            let parts = [];
+
+            const parts = [];
+
             for (let i = start; i <= end; i++) {
                 parts.push(file + ".part" + i);
             }
+
             return parts;
         }
-        Promise.all([
-            mergeFiles(getParts("Build/NewestBuild.wasm.gz", 1, 3)),
-            mergeFiles(getParts("Build/NewestBuild.data.gz", 1, 16))
-        ]).then(([wasmUrl, dataUrl]) => {
-            container.hidden = false;
-            var buildUrl = "Build";
-            var loaderUrl = buildUrl + "/NewestBuild.loader.js";
-            var config = {
-                dataUrl: dataUrl,
-                frameworkUrl: buildUrl + "/NewestBuild.framework.js.gz",
-                codeUrl: wasmUrl,
-                streamingAssetsUrl: "StreamingAssets",
-                companyName: "Stupid Game",
-                productName: "R.E.P.O",
-                productVersion: "0.1"
-            };
-            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-                var meta = document.createElement('meta');
-                meta.name = 'viewport';
-                meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
-                document.getElementsByTagName('head')[0].appendChild(meta);
-                container.className = "unity-mobile";
-                canvas.className = "unity-mobile";
-            } else {
-                function resizeCanvas() {
-                    canvas.width = window.innerWidth;
-                    canvas.height = window.innerHeight;
-                    canvas.style.width = window.innerWidth + "px";
-                    canvas.style.height = window.innerHeight + "px";
-                }
-                resizeCanvas();
-                window.addEventListener('resize', resizeCanvas);
-            }
-            loadingBar.style.display = "block";
-            var script = document.createElement("script");
-            script.src = loaderUrl;
-            script.onload = () => {
-                createUnityInstance(canvas, config, (progress) => {
-                    progressBarFull.style.width = 100 * progress + "%";
-                }).then((unityInstance) => {
-                    loadingBar.style.display = "none";
-                    document.querySelector("#loading-text").remove();
-                }).catch((message) => {
-                    alert(message);
+
+
+        /*
+         * Download and merge split files
+         */
+        async function mergeFiles(fileParts) {
+
+            const buffers = [];
+
+            for (let i = 0; i < fileParts.length; i++) {
+
+                const response = await fetch(fileParts[i], {
+                    cache: "no-store"
                 });
-            };
-            document.body.appendChild(script);
-        });
+
+                if (!response.ok) {
+                    throw new Error(
+                        "Could not load " +
+                        fileParts[i] +
+                        " (" +
+                        response.status +
+                        ")"
+                    );
+                }
+
+                const data = await response.arrayBuffer();
+
+                buffers.push(data);
+            }
+
+            const totalLength =
+                buffers.reduce(
+                    (total, buffer) => total + buffer.byteLength,
+                    0
+                );
+
+            const merged = new Uint8Array(totalLength);
+
+            let offset = 0;
+
+            for (const buffer of buffers) {
+
+                merged.set(
+                    new Uint8Array(buffer),
+                    offset
+                );
+
+                offset += buffer.byteLength;
+            }
+
+            return merged.buffer;
+        }
+
+
+        /*
+         * Decompress a GZIP file
+         */
+        async function decompressGzip(buffer) {
+
+            if (!("DecompressionStream" in window)) {
+
+                throw new Error(
+                    "This browser does not support GZIP decompression."
+                );
+            }
+
+            const blob = new Blob(
+                [buffer],
+                { type: "application/gzip" }
+            );
+
+            const stream = blob.stream().pipeThrough(
+                new DecompressionStream("gzip")
+            );
+
+            return await new Response(stream).arrayBuffer();
+        }
+
+
+        /*
+         * Create a Blob URL that Unity can load
+         */
+        function createBlobUrl(buffer, type) {
+
+            const blob = new Blob(
+                [buffer],
+                { type: type }
+            );
+
+            return URL.createObjectURL(blob);
+        }
+
+
+        /*
+         * Start loading the game
+         */
+        async function startGame() {
+
+            try {
+
+                loadingText.textContent =
+                    "LOADING GAME...";
+
+
+                /*
+                 * Merge WASM parts
+                 *
+                 * NewestBuild.wasm.gz.part1
+                 * NewestBuild.wasm.gz.part2
+                 * NewestBuild.wasm.gz.part3
+                 */
+                const wasmCompressed =
+                    await mergeFiles(
+                        getParts(
+                            "Build/NewestBuild.wasm.gz",
+                            1,
+                            3
+                        )
+                    );
+
+
+                loadingText.textContent =
+                    "LOADING DATA...";
+
+
+                /*
+                 * Merge DATA parts
+                 *
+                 * NewestBuild.data.gz.part1
+                 * ...
+                 * NewestBuild.data.gz.part16
+                 */
+                const dataCompressed =
+                    await mergeFiles(
+                        getParts(
+                            "Build/NewestBuild.data.gz",
+                            1,
+                            16
+                        )
+                    );
+
+
+                loadingText.textContent =
+                    "DECOMPRESSING...";
+
+
+                /*
+                 * Decompress the GZIP files
+                 */
+                const wasm =
+                    await decompressGzip(
+                        wasmCompressed
+                    );
+
+                const data =
+                    await decompressGzip(
+                        dataCompressed
+                    );
+
+
+                /*
+                 * Create local URLs
+                 */
+                const wasmUrl =
+                    createBlobUrl(
+                        wasm,
+                        "application/wasm"
+                    );
+
+                const dataUrl =
+                    createBlobUrl(
+                        data,
+                        "application/octet-stream"
+                    );
+
+
+                /*
+                 * Show Unity
+                 */
+                container.hidden = false;
+
+                loadingText.textContent =
+                    "STARTING R.E.P.O...";
+
+
+                const buildUrl = "Build";
+
+                const loaderUrl =
+                    buildUrl +
+                    "/NewestBuild.loader.js";
+
+
+                /*
+                 * Unity configuration
+                 */
+                const config = {
+
+                    dataUrl: dataUrl,
+
+                    frameworkUrl:
+                        buildUrl +
+                        "/NewestBuild.framework.js",
+
+                    codeUrl: wasmUrl,
+
+                    streamingAssetsUrl:
+                        "StreamingAssets",
+
+                    companyName:
+                        "Stupid Game",
+
+                    productName:
+                        "R.E.P.O",
+
+                    productVersion:
+                        "0.1"
+                };
+
+
+                /*
+                 * Mobile settings
+                 */
+                if (
+                    /iPhone|iPad|iPod|Android/i.test(
+                        navigator.userAgent
+                    )
+                ) {
+
+                    const meta =
+                        document.createElement("meta");
+
+                    meta.name = "viewport";
+
+                    meta.content =
+                        "width=device-width, " +
+                        "height=device-height, " +
+                        "initial-scale=1.0, " +
+                        "user-scalable=no, " +
+                        "shrink-to-fit=yes";
+
+                    document
+                        .getElementsByTagName("head")[0]
+                        .appendChild(meta);
+
+                    container.className =
+                        "unity-mobile";
+
+                    canvas.className =
+                        "unity-mobile";
+
+                } else {
+
+                    function resizeCanvas() {
+
+                        canvas.width =
+                            window.innerWidth;
+
+                        canvas.height =
+                            window.innerHeight;
+
+                        canvas.style.width =
+                            window.innerWidth + "px";
+
+                        canvas.style.height =
+                            window.innerHeight + "px";
+                    }
+
+                    resizeCanvas();
+
+                    window.addEventListener(
+                        "resize",
+                        resizeCanvas
+                    );
+                }
+
+
+                /*
+                 * Show Unity loading bar
+                 */
+                if (loadingBar) {
+                    loadingBar.style.display = "block";
+                }
+
+
+                /*
+                 * Load Unity loader
+                 */
+                const script =
+                    document.createElement("script");
+
+                script.src = loaderUrl;
+
+                script.onload = function () {
+
+                    if (
+                        typeof createUnityInstance !==
+                        "function"
+                    ) {
+
+                        throw new Error(
+                            "Unity loader loaded, but createUnityInstance was not found."
+                        );
+                    }
+
+
+                    createUnityInstance(
+                        canvas,
+                        config,
+
+                        function (progress) {
+
+                            if (progressBarFull) {
+
+                                progressBarFull.style.width =
+                                    (100 * progress) + "%";
+                            }
+
+                            loadingText.textContent =
+                                "LOADING R.E.P.O... " +
+                                Math.round(
+                                    progress * 100
+                                ) +
+                                "%";
+                        }
+
+                    ).then(function (unityInstance) {
+
+                        if (loadingBar) {
+                            loadingBar.style.display =
+                                "none";
+                        }
+
+                        loadingText.remove();
+
+                    }).catch(function (error) {
+
+                        console.error(
+                            "Unity failed to start:",
+                            error
+                        );
+
+                        loadingText.textContent =
+                            "R.E.P.O FAILED TO LOAD";
+
+                        unityShowBanner(
+                            "Unity error: " +
+                            error,
+                            "error"
+                        );
+                    });
+                };
+
+
+                script.onerror = function () {
+
+                    throw new Error(
+                        "Could not load Build/NewestBuild.loader.js"
+                    );
+                };
+
+
+                document.body.appendChild(script);
+
+
+            } catch (error) {
+
+                console.error(
+                    "R.E.P.O loading error:",
+                    error
+                );
+
+                loadingText.textContent =
+                    "FAILED TO LOAD R.E.P.O";
+
+                unityShowBanner(
+                    error.message ||
+                    String(error),
+                    "error"
+                );
+            }
+        }
+
+
+        /*
+         * Start everything
+         */
+        startGame();
+
     </script>
+
 </body>
 
 </html>
